@@ -721,3 +721,10 @@ Node18.20.8:
 - 实现与独审分别实际使用编辑工具做独立文本探针：指定特殊字符、外部段、CRLF、0640模式及文档/YAML同一命令值保留。无末尾换行确实被追加LF，已准确写入ownership限制；不能把该边界称保真，也不能推广成任意文件安全。no-op探针仅连续只读比较，不能冒充真实模型主动no-op。未执行业务/检索命令。
 - 独审SKILL总51行，改动Markdown的20个链接/锚点有效；协调 `rtk proxy git diff --check` exit0。ignored `T05-M1-baseline-text-fix-report.md`、`T05-M1-baseline-text-review.md` 与各自原始探针/失败/最终输出保留，未重跑旧默认套件、模型或安装。
 - 后续：行为遵循、完整语义及超时仍待真实验收；第三系列技术失败、F01–F05、入口链选择和人工正常体验保持未闭合。未放行第四系列、发布或M2，T10未启动。
+
+### 2026-10-15 T05 人读执行阶段说明限定收尾
+
+- 从 `14f70b7` 仅在 `skills/vic-bootstrap/references/artifacts.md` 增加一处人读执行断言质量门（2行）：按实际语言/模块机制核对顶层求值、显式调用和回调触发；无循环同步ESM只作有条件示例，保留动态导入及注册时同步回调的真实情形。依赖/定位箭头须标明关系，不无据制造执行时序。
+- 本项与尚待用户选择的机器入口链含义独立：未改app-deep、schema、expected或旧评分，不自动排除路径、不要求完整图或逐import产物、不扩大所有权。代价与限制是仍需真实调查和行为验收，不能以增加规则关闭F03。
+- 独立限定复审可提交，无必须修改项；四种情形（同步ESM、动态import、真实启动请求、注册时同步回调）均人工核对。实际diff1963字节、SHA256 `67a84de9000c58429d17df9f5e98cf1869788707000dd2041059317ae4edcf39`，与报告一致；2个既有链接有效，`rtk proxy git diff --check` exit0。
+- 纯文档不写镜像测试、不重跑coverage/default/LLM/安装。ignored `T05-phase-boundary-preparation.md`、`T05-phase-boundary-report.md`、`T05-phase-boundary-review.md` 与实际diff/静态核验保留；T05/M1仍未完成，后续验证需另行冻结来源并明确执行范围。
