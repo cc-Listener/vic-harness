@@ -11,12 +11,12 @@
 | T02 | 合同 schema v2 | M1 | ✅ | 2026-10-14 | 标准 JSON Schema 小子集；58 个 v1 业务路径、163 个项目示例路径验收通过；独立审查可合入 |
 | T03 | vic-check：解析与合同规则 | M1 | ✅ | 2026-10-14 | 应用文档扫描及C09命令代理误报已修；独立复审两Node40/40、14边界探针、真实f2只读检查均通过 |
 | T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 原票及M1两条完整入口链限定修复独审通过，双Node 102项；旧失败结果保留 |
-| T05 | vic-bootstrap v2 | M1 | 🟡 | | 原票及既有修复独审通过；第二系列发现输入协议、语义交付及写范围P2，发布前修复重新打开；旧结果保留 |
+| T05 | vic-bootstrap v2 | M1 | 🟡 | | 原票及协议/stdin限定修复独审通过；第三系列8/12、f2 0/3，语义交付/流程P2仍open；人工体验未闭合，旧结果保留 |
 | T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 静态迁移与两次限定修复均独立通过；真实试用主动no-op/完整摘要已验证，仍有3项已披露输出缺陷移交T12，完整行为未通过 |
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
 | T08 | vic-router 与 vic-check skill 文本 | M1 | ✅ | 2026-10-14 | 11场景及fallback完整；独立27测试/CLI探针通过，RTK依赖R1修复与Node-only限定复审通过 |
-| T09 | 评测运行器 | M1 | ✅ | 2026-10-14 | 原票及发布bundle/oracle隔离独审通过；第二系列12槽位/CSV/来源/清理独审闭合，仅资源路径隔离 |
-| — | 🚩 发布 v0.1.0 | M1 | 🟡 | | 第二固定系列8/12：f1 3/3、f2 2/3、f3 1/3、f4 2/3；独审不可发布，T05问题及人工体验待闭合 |
+| T09 | 评测运行器 | M1 | ✅ | 2026-10-14 | 原票及发布bundle/oracle隔离独审通过；第三系列12槽/21轮、CSV/来源/清理独审闭合，815固定+202可变证据；仅资源路径隔离 |
+| — | 🚩 发布 v0.1.0 | M1 | 🟡 | | 第三固定系列raw/L2 8/12、执行9/12：f1/f2/f3/f4为3/0/2/3；技术失败，T05 P2及人工体验未闭合，不放行发布/M2 |
 | T10 | 来源字段与过期检测 | M2 | ⬜ | | |
 | T11 | refresh-log | M2 | ⬜ | | |
 | T12 | vic-agents 的 fixtures 与评测 | M2 | ⬜ | | |
@@ -683,3 +683,15 @@ Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
 - 实现者及独审各自从发布代码块在两 Node 的独立临时目标实际执行。Node25.8.1、Node18.20.8 均 exit0/stderr空，完整树仅两预列产物变化，无新增/删除，其余文件字节及全部 mode 保持；临时目标已清理。独审命令 `rtk proxy python3 .superpowers/sdd/07-roadmap/T05-M1-generator-stdin-review-evidence/probe.py`；18个链接/锚点有效，协调 diff --check exit0。
 - ignored `T05-M1-generator-stdin-report.md`、`T05-M1-generator-stdin-review.md` 与两套 probe 证据保留。独审可合入本示例，未跑模型/安装/默认全套；不能据此宣称真实模型遵循或全宿主零写入。旧目标外 scratch 及其余行为 P2 仍 open，T05/M1 未完成。
 - 第三系列已预登记12槽位，请求同模型 high 条件；尚未放行。新调度 STOP 预检发现独立配置进程可能遗留，正限于 ignored 调度层修复并用模拟进程验证；待其独审及最终 SHA/条件固定再执行，旧系列脚本和结果保持。
+
+
+### 2026-10-15 M1 第三固定系列最终收口：技术失败，不可发布
+
+- 冻结 `39b4e7e35b4036d5f1f6bed0f5861d08dae3b0ee`，正常cliproxyapi，请求 `gpt-6.1-sol/high`，实际model/effort均null；显式RTK、每轮1200秒、最多两lane。12预登记槽自然结束并最终独审闭合，未替换/追加；原raw/L2 **8/12**、execution_completed **9/12**，实际 **21轮**（12首/9二），f1/f2/f3/f4分别 **3/3、0/3、2/3、3/3**，f2未达至少2/3，规定技术门失败。旧9/12与第二系列8/12各自保留、不混分母。
+- f2 r1/r2及f3 r1首轮超时，CLI exit0不构成完成；f2 r2零交付。f2 r1局部交付仍有覆盖缺口，无最终回复，不混为成功后误称完整。f2 r3两轮完成且二轮全树零变，但固定entry_chain完整数组失败；真实加载期初始化表示有规格歧义，最终独审无新增确定语义P2，不改expected/raw。helper二轮内部确实读取env evidence但不回显，不能称从未读取。
+- 附加P2仍open并归T05：文档转义/检索损坏，前置反馈遗漏及明确全合同范围夸大，人读启动阶段误述，低信息共享表实值，新证据已读而uncertainty仍写未知。机器LI空与人读表偏差、失败生成器与实际file_change分别记录；成功不抵销同类缺陷，P3不自动升级。四专项诊断只为未实施候选，不授权产品修复或追加采样。
+- 承接已闭合双Node默认测试61/61、66/66及同源隔离安装，未重跑。42资源文件同源，16目录0775→0755保留；内部完整stdout/stderr未保存、stderr丢弃，外层仅真实invocation/合并tool-output，不声称完整原始流或stderr为空。六namespace发现/卸载清理仅证明安装发现，不证明native业务回合。
+- 两CSV各6行与原result逐字段一致；237early/formal原附件相同，deep-copy241项含CSV核验。共872完成命令、174其他item，无未完成工具；真实并发峰值2、lane串行，九实际二轮全树零变。八成功现场清理、四失败现场及外部系列根保留，无同身份遗留进程、无新增越权/保护破坏STOP；事件审查不代表宿主强隔离。
+- 最终manifest SHA256 `81d9ef5862f45f5a2d8d72af7b9e0900770a99b0820ffeb97f686f2635509c5a`：815固定执行项全匹配，另202明确root_mutable亦读取记录，不能称1017全部冻结；后续新增独审材料另由当前独审快照绑定。原prepared113项及hash `17d9b52d12379379317d0daeecb6044e4384d27dcb5f0d936bf970f87ec08d58`保留。
+- 本会话新增 [第三系列incident](../harness/incidents/2026-10-15-m1-third-bootstrap.md)，依据ignored `M1-third-validation-report.md`、`M1-third-review.md`、final-series-audit及final-review-current-manifest；仅归档和本次进度记录，未修改产品/旧评分/旧证据，未运行模型/安装/默认测试，未stage/commit。
+- 阻塞保持：规定技术门失败、附加P2未闭合、真实仓库bootstrap+agents正常人工体验未完成；发布及M2均不放行，M2/T10未启动，不代签人工、不tag/push。后续有限修复须具体处置和独审，不用放宽expected、禁止合法refresh或混旧成功翻绿。
