@@ -12,7 +12,7 @@
 | T03 | vic-check：解析与合同规则 | M1 | ✅ | 2026-10-14 | 六条规则与 CLI；R1 应用文档漏扫已修；Node 18/当前 Node 23 tests 通过，示例 0 error；独立复审可合入 |
 | T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 四夹具与两基线断言器；R1 特殊文件名漏报已修；Node 18/当前 Node 51 项通过；独立复审可合入 |
 | T05 | vic-bootstrap v2 | M1 | 🟡 | | 正在迁移 M1 技能与逐项验收；真实模型评测等待检查器稳定窗口 |
-| T06 | vic-agents v2 | M1 | ⬜ | | |
+| T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 77行主体、九references、显式policy；五组确定性配置检查符合预期；独立审查待定 |
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
 | T08 | vic-router 与 vic-check skill 文本 | M1 | ⬜ | | |
 | T09 | 评测运行器 | M1 | ⬜ | | |
@@ -48,6 +48,7 @@
 | 2026-10-14 | T02 / 协调裁定 | v1 `version` 与新 `schema_version` 并存时的语义，旧参考混合规则元数据，以及 agents 日志审计字段尚未明确。 | 根合同保留 `version:1` 兼容标记，`schema_version:2` 为格式权威；旧 `fields/description/allowed_values` 不算业务字段，`role/value` 保持原形。日志最小可选审计字段为 `models_checked_at/agent_fields_checked_at/source_urls`；agents 真正 no-op 零写入。 | 按协调明确技术裁定执行；说明写入 `schemas/MIGRATIONS.md`。 |
 | 2026-10-14 | T07 / 协调裁定 | ADR-0002 称 smol-toml 为 MIT，但官方稳定版 1.9.1 实际是 BSD-3-Clause。 | 内置官方单文件 bundle，保留真实完整 BSD 版权、条件与免责声明；记录版本、完整性及原 bundle/最终文件 SHA256。 | 按真实许可证执行，ADR 原件不改。 |
 | 2026-10-14 | T07 / 协调裁定 | 合法旧注册 config_file 引用的无 name 片段若一律按 standalone 会被误报缺 name/description，引用自身也会被误判重复。 | 被旧注册引用且无 name 的 TOML 按旧片段，不套 A02；有 name 或未注册的 agents 直属 TOML 按 standalone。A05 只报同一角色身份双定义；缺失/越界引用安全报 A01。 | 保留旧注册与无关配置，分类解释覆盖测试与本票记录。 |
+| 2026-10-14 | T06 / 协调裁定 | v1 将sandbox_mode称角色默认值，与当前官方角色权限语义冲突；无关历史报错及自定义合同也可能与全库0error目标冲突。 | 按同日研究纠正角色文件不覆盖父会话权限；保留未知schema合同与用户保护角色。零配置收益零写入优先，只修本次相关且已授权问题；无关失败如实报告并路由。 | 沿用用户内容保护与真实no-op决定，不为零错误扩大写入；既有授权持续有效。 |
 
 ## 本轮执行约定
 
@@ -59,6 +60,42 @@
 ## 迁移勾选
 
 T05、T06 完成时，把 08-v1-migration.md 的勾选结果贴在这里。
+
+### T06 · multi-agent-config → vic-agents（2026-10-14）
+
+必须保留：
+
+- [x] 单代理先行，内置够用不建 custom：SKILL §边界/步骤2，decision-rules。
+- [x] 主会话+0–3子代理，agent_count含主会话，并发不含：SKILL §边界，decision-rules/output-schema。
+- [x] 配置/执行及写入/加载分离：SKILL §步骤2/4/5，materialization-layout/engineering-notes。
+- [x] 能力四类与三态：capability-inventory，output-schema。
+- [x] 官方日期/URL、用户模型优先、两步继承、Ultra→Luna同时设推理：model-policy，examples。
+- [x] 五个agents字段、max_threads、standalone三必填、旧config_file增量维护：materialization-layout；旧无name片段区分处理。
+- [x] 摘要字段不进TOML、权限证据分层：SKILL §步骤3，capability-inventory/materialization-layout/evaluation。v1“sandbox是角色默认值”按当前官方证据纠正为角色文件不覆盖父会话权限。
+- [x] superpowers三态与bridge读取入口：materialization-layout，output-schema。
+- [x] 三种角色模板及不凑角色：role-templates，decision-rules。
+- [x] output-schema及requires_explicit_codex_multiagent_invocation兼容字段：保留24个顶层键与关键对象全部子键。
+- [x] 运行判断不回写合同：SKILL §步骤1/5，output-schema。
+- [x] 中文输出及技术名保留原文：SKILL §步骤5，中文角色模板/示例/摘要说明。
+
+必须修改：
+
+- [x] 改名、openai.yaml、policy.allow_implicit_invocation=false、含英文触发词的description。
+- [x] 从实际SKILL目录定位../../schemas与../../scripts，不查其他skill目录。
+- [x] 不迁移complete-workflow兼容入口，全部交付清单合入evaluation-and-contracts。
+- [x] 自行派生代理的skill计入skills.available，同类审查去重：capability-inventory/decision-rules。
+- [x] 旧平行层转TOML/退役/人类文档三方案、引用影响、已有授权与待确认边界：materialization-layout。
+- [ ] refresh-log留T11；M1不写，未来真正no-op仍零日志，非本票遗漏。
+- [x] 结束实际执行vic-check --agents；只修本次已授权范围，历史失败保留并如实报告。
+- [x] model-policy超过45天先提醒核验；字段/版本兼容请求定向核验。
+- [x] 接收vic-learn agent-role教训并有证据地更新对应developer_instructions。
+- [x] 技能目录无__MACOSX/.DS_Store；现有.gitignore已含两项，无需越界修改。
+
+迁移后验证：
+
+- [x] 上述必保留项逐项找到v2文本对应；九份references、24个本地链接、共享文件定位及metadata通过。
+- [x] examples三例对应f5/f6/Ultra变体的参考行为；三段TOML解析及实际检查通过。
+- [ ] T12真实技能行为评测未执行，不能把确定性示例校验当LLM行为验收。
 
 ## 会话日志
 
@@ -231,3 +268,40 @@ T04_VERIFIED=33
 - 未完成 / 遗留：官方 loader 实际角色加载、账号模型可用性不在本票确定性规则验收范围；未执行 LLM 回合。45 天字段保鲜 CI 留 T21，`--drift` 与后续 C 规则仍未实现。独立审查待协调派发。
 - 给下个会话的提示：T06 可实际执行 `--agents`；保留已有合法旧注册与无 name 片段，正文表达权限意图并不建立运行时隔离；不要把 max_depth 兼容警告升级成所有版本无效。T05 的技能改动仍属于并行独立任务，本票未暂存其文件。
 - 独立审查：`review_t07` 结论“可合入，无必须修复项”。实际重跑当前 Node 和 Node18 均 38/38；A01–A07、CLI范围、C规则回归与边界通过；上游 vendor 哈希、真实完整 BSD-3-Clause 和最薄适配重新核验通过。1551 文件独立性能探针约 208ms，内容及权限保持不变。未发现 Hard stops、ADR 或范围违规；实现 `e789ef1`，报告见 ignored `T07-review.md`。
+
+### 2026-10-14 T06 vic-agents v2
+- 做了什么：迁移v1完整核心规则，主体77行；九份references保留完整摘要及窄角色模板，交付清单合并到evaluation。增加技能委派能力去重、旧平行层逐文件迁移、角色教训接收、45天模型保鲜、共享schema/scripts实际路径定位及explicit-only policy。按当天研究纠正权限/历史字段语义；自定义schema与无关历史错误保留并如实报告。M1不写日志，真正no-op零写入。
+- 产出文件：skills/vic-agents/SKILL.md、agents/openai.yaml、references/{decision-rules,capability-inventory,model-policy,materialization-layout,role-templates,evaluation-and-contracts,engineering-notes,examples}.md、references/output-schema.yaml；本进度文件。ignored详细报告为.superpowers/sdd/07-roadmap/T06-report.md。
+- 验证方法：rtk proxy node --input-type=module -执行确定性静态与临时配置脚本；YAML/TOML使用现有内置解析器。24个本地链接、三个共享路径、metadata policy=false、24个v1摘要顶层键与关键对象子键、三态bridge、11文件Hard stops/行尾空白均通过。rtk proxy git diff --check -- skills/vic-agents为exit0。
+- 原始关键输出：
+
+```text
+SKILL_LINES=77
+REFERENCE_COUNT=9
+LOCAL_LINKS_VALID=24
+SHARED_PATHS_VALID=true
+METADATA_EXPLICIT_ONLY=true
+V1_SUMMARY_TOP_LEVEL_KEYS_PRESERVED=24
+HARD_STOPS=PASS
+CHECKER_f5-reference={"exit":0,"error":0,"warn":0,"ids":[],"input_preserved":true}
+ZERO_WRITE_BASELINE_CHECKER=true
+CHECKER_f6-reference={"exit":0,"error":0,"warn":0,"ids":[],"input_preserved":true}
+CHECKER_ultra-reference={"exit":0,"error":0,"warn":0,"ids":[],"input_preserved":true}
+CHECKER_old-registration={"exit":0,"error":0,"warn":3,"ids":["A03","A04","A06"],"input_preserved":true}
+CHECKER_unknown-contract-history-error={"exit":1,"error":1,"warn":0,"ids":["A07"],"input_preserved":true}
+ACTUAL_CHECKER_SCENARIOS=5
+EXAMPLES_TOML_PARSE=3_PASS
+BEHAVIOR_EVAL_T12=NOT_RUN
+LLM_RUNTIME_LOADING=NOT_RUN
+TEMP_FIXTURES_CLEANED=true
+FINAL_STATIC_FILES=11
+FINAL_STATIC_LINKS=24
+FINAL_METADATA_POLICY=false
+FINAL_BRIDGE_THREE_STATES=PASS
+FINAL_STATIC=PASS
+```
+
+- 实际checker：五组临时仓库分别以rtk proxy node <实际插件>/scripts/vic-check.mjs --agents --root <临时仓库> --json执行。旧注册无name片段、max_threads/max_depth与topology得到0error3warn（A03/A04/A06）；自定义version3合同及历史A07角色正确exit1/error1，所有输入字节不变。临时仓库已清理。另在插件根执行rtk proxy node scripts/vic-check.mjs --agents --root . --json得到summary.error=0/warn=0；插件根无目标角色，该结果不替代示例配置验证。
+- 未完成 / 遗留：以上是确定性文本/配置验收，未执行LLM/T12真实技能行为、账户模型可用性或loader生效检查，也未修改apple-tools。字段与模型基于同日已核验研究，公开schema未绑定固定CLI版本。T11日志与T12行为评测保留后续里程碑，三示例只是参考行为；M1真实试用与稳定性门槛仍需协调执行。
+- 给下个会话的提示：已有授权无需重复确认；未知自定义合同只作线索并回源码核对相关事实。无关历史失败报告未通过并路由，不扩大修改；零配置收益零写入优先。角色文件不提供独立只读沙箱；Ultra→Luna显式模型覆盖要核对最终推理。仅文档改动，本票未改检查器或目标项目。
+- 独立审查：待协调会话派发。
