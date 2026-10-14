@@ -38,6 +38,7 @@ description: 仅在用户明确要求时，为仓库初始化或增量刷新项�
 4. **将 gate 核验结果补回同一集合。** 按 [artifacts.md](references/artifacts.md) 区分验证入口索引与执行资格；先静态检查调用链、本地依赖和工具/shim，确认不下载、不联网、不写缓存后才执行。缺依赖或无法确认只读时仅索引，连包管理器 `--version` 也不运行。可安全执行的 lint/typecheck/format-check 每条最多 120 秒；测试默认只索引，用户明确要求才运行。
    完成条件：每条本次核验 gate 有真实 `verified` 及未验证原因；真实结束才记录 `exit_code`，失败/超时/权限或依赖缺失进入 `uncertainty`。保留仍有效的既有执行证据，不安装依赖、写缓存或事后清理来冒充只读验证；不能执行不免除应有的索引交付。
 5. **从同一集合增量序列化合同。** 按共享 schema 与 [artifacts.md](references/artifacts.md) 生成根及所需子合同，每文件一份 YAML。保留稳定 ID、有效旧事实/M2 扩展、`version: 1`、`bootstrap_status.level`、旧导航 `role/value`、abstraction `path` 等兼容形状；新 gate 使用 `command`，旧别名按迁移规则读取。
+   需要代码生成产物时，按 [直接 stdin 示例](references/ownership.md#生成器直接经-stdin-执行) 将生成器代码交给 `node --input-type=module -`，只写预先确认的授权产物，不落生成器脚本；与 coverage 的 JSON stdin 分开调用。
    完成条件：集合中需机器交付的事实进入所属字段，根 `apps[]` 与 `scoped_guidance` 注册指向实际 app/文档/guidance；根/子分工及组件文档 sources 指针符合 references。只增量修改已判定缺口，不在序列化时重新挑选事实或重排无关内容。
 6. **从同一集合增量生成人读文档。** 按 [artifacts.md](references/artifacts.md) 与 [app-deep.md](references/app-deep.md) 更新导航、地图、事实性约定和组件文档；与合同共享事实、归属和定位值，保留准确 prose、等价入口与外部原文。解释、导航和外部规范指针不必机械转成 YAML。
    完成条件：根与各目标 app 的必需文档可导航到达；导航只含读取顺序、canonical 指针、最小路由和少量 hard stops，AGENTS 目标 ≤120 行；override 优先且只读，链接和 scope 正确，组件文档满足全部质量门。

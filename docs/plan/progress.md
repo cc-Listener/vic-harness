@@ -675,3 +675,11 @@ Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
 - 实现者及独立审查者分别实际执行 `rtk proxy node --test tests/bootstrap-coverage.test.mjs` 和共享 Node18 的同一定向命令，各 **10/10、fail0、skip0、exit0**。独审另从基线脚本复现无 stdin exit0 误绿，核对新 CLI/API 八类缺失输入一致、双空集合、无本地 PA 的单条 LI、低信息 Go、未知合同顺序及禁区/越界/绝对路径/软链拒绝；完整目标树前后相同。协调 `rtk proxy git diff --check` exit0，三文件 diff 与受审附件相符。
 - ignored `T05-M1-input-scope-fix-report.md`、`T05-M1-input-scope-fix-review.md` 及原始探针记录保留。独审无阻断，可合入本窄补丁；**T05 仍🟡、M1 当前不可发布**。未执行模型、安装或 live 默认全套，也未改变旧评分。漏调用/漏提交事实、普通入口分类、人读机器一致性、entry_chain 与目标外 scratch 仍 open，不能据此声称行为成功率改善。
 - 后续仅追加直接 stdin 生成器示例的窄实现与独立验证；第三系列先准备，须两项补丁独审完成、最终新 SHA 及完整条件固定后由协调放行，当前尚未执行。
+
+### 2026-10-14 T05 M1 直接 stdin 生成器示例独审通过
+
+- 输入协议补丁已提交 `41587c1437138d1d3b0deaa193ef8c7f01bab1b4`。fresh 实现只在主 SKILL 序列化步骤增加指针、ownership 增加标准 Node 单引号 heredoc 示例，两文件新增22行，SKILL51行。生成器代码直接进入 stdin，明确只写预先确认的授权产物，不落脚本；与 coverage JSON 是独立调用，实际命令遵守目标 guidance。
+- 示例先确认路径、目录和所有权，内容须替换为已核实集合的增量结果，外部段落和有效旧字段照旧保护，no-op 不写。演示内容不代表完整合同，不是无损合并器；没有扩展 scratch 权限或新增依赖。
+- 实现者及独审各自从发布代码块在两 Node 的独立临时目标实际执行。Node25.8.1、Node18.20.8 均 exit0/stderr空，完整树仅两预列产物变化，无新增/删除，其余文件字节及全部 mode 保持；临时目标已清理。独审命令 `rtk proxy python3 .superpowers/sdd/07-roadmap/T05-M1-generator-stdin-review-evidence/probe.py`；18个链接/锚点有效，协调 diff --check exit0。
+- ignored `T05-M1-generator-stdin-report.md`、`T05-M1-generator-stdin-review.md` 与两套 probe 证据保留。独审可合入本示例，未跑模型/安装/默认全套；不能据此宣称真实模型遵循或全宿主零写入。旧目标外 scratch 及其余行为 P2 仍 open，T05/M1 未完成。
+- 第三系列已预登记12槽位，请求同模型 high 条件；尚未放行。新调度 STOP 预检发现独立配置进程可能遗留，正限于 ignored 调度层修复并用模拟进程验证；待其独审及最终 SHA/条件固定再执行，旧系列脚本和结果保持。

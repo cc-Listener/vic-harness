@@ -33,3 +33,24 @@
 导航指向 canonical 文档，细节与事实放到对应层。用户的 override 不替换成第二份地图；现有 app guidance 的目录作用域继续生效。
 重复导航的 legacy 文件只列入报告和 `$vic-agents` 的迁移建议，不改写。任何“受影响文件”清单只能包含实际有权且确实改动的文件。
 M1 不新写 `integrations/foreign_sections` 或 refresh-log；所有权保护本身立即执行，不等待 M2 的结构化检测。
+
+## 生成器直接经 stdin 执行
+
+在目标仓库根执行；先确认本次 `bootstrap/refresh` 确实需要改动的产物路径、目录及所有权，并在上下文列明允许写入的产物。下面仅演示已获写权限且父目录已存在的 `docs/project-map.md` 和 `contracts/project-context.yaml`；内容须替换为本轮已核实集合的增量结果，保留外部段落和有效旧字段，不能照抄示例覆盖已有合同。`no-op` 不执行写入。
+
+```sh
+node --input-type=module - <<'VIC_GENERATOR'
+import { writeFile } from 'node:fs/promises';
+
+const artifacts = new Map([
+  ['docs/project-map.md', '# 项目地图\n\n本轮已核实的项目结构。\n'],
+  ['contracts/project-context.yaml', 'version: 1\n'],
+]);
+for (const [path, content] of artifacts) {
+  await writeFile(path, content, 'utf8');
+}
+console.log(JSON.stringify({ written: [...artifacts.keys()] }));
+VIC_GENERATOR
+```
+
+带单引号的 heredoc 分隔符使 shell 不展开代码中的变量或命令替换；生成器代码直接进入 Node stdin，不创建生成器文件，也不新增 scratch 或状态文件。实际命令遵守目标 guidance 的代理约定。这里的 stdin 是 JavaScript 代码；coverage helper 接收 JSON 是另一次独立调用，不能共用或拼接同一 stdin。
