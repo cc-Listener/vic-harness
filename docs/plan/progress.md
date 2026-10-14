@@ -15,7 +15,7 @@
 | T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 静态迁移与两次限定修复均独立通过；真实试用主动no-op/完整摘要已验证，仍有3项已披露输出缺陷移交T12，完整行为未通过 |
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
 | T08 | vic-router 与 vic-check skill 文本 | M1 | ✅ | 2026-10-14 | 11场景及fallback完整；独立27测试/CLI探针通过，RTK依赖R1修复与Node-only限定复审通过 |
-| T09 | 评测运行器 | M1 | 🟡 | | T04/T05依赖已完成，独立新上下文实施中；固定provider及请求条件 |
+| T09 | 评测运行器 | M1 | 🟡 | | 实现及真实f1旧绑定两轮通过；最终源码兼容/失败边界修正已确定性验证，待完整独立验收 |
 | — | 🚩 发布 v0.1.0 | M1 | ⬜ | | |
 | T10 | 来源字段与过期检测 | M2 | ⬜ | | |
 | T11 | refresh-log | M2 | ⬜ | | |
@@ -538,4 +538,15 @@ STANDARD_NODE_EXAMPLE=true; ABSOLUTE_USER_PATH=false; READ_ONLY_BOUNDARY_PRESERV
 
 - 实现990297b覆盖11场景、外部未装替代、M1占位/漂移边界及真实checker语义；独立审查重跑27测试全部通过，CLI参数/0-1-2退出和只读探针通过。唯一P2为发布示例无条件RTK依赖，在Node-only环境复现exit127。
 - fresh R1提交1e8fb73仅把示例改标准Node并说明按目标guidance可选包装，开发shell仍RTK。独立限定复审重新从发布代码块运行：NODE_ONLY_RTK_AVAILABLE=False、NODE_ONLY_EXIT=0、READ_ONLY_BYTES_MODES=true、LINK_OK=True、SKILL_LINES=42、TEMP_CLEANED=True；diff检查通过，原P2 ADDRESSED，无新增阻塞，spec/质量通过。
-- 报告ignored T08-review.md、T08-fix-report.md、T08-fix-review.md；T08标完成。未运行router LLM评测或完整f1–f7，本票不替代M1稳定性验收。T09仍实施中，真实首轮两次运行已通过但发布默认prompt兼容修正与独立票审尚待完成。
+- 报告ignored T08-review.md、T08-fix-report.md、T08-fix-review.md；T08标完成。未运行router LLM评测或完整f1–f7，本票不替代M1稳定性验收。T09仍实施中，真实f1两轮运行已通过但发布默认prompt兼容修正与独立票审尚待完成。
+
+### 2026-10-14 T09 评测运行器（待完整独立验收）
+
+- 产出 `evals/run.sh`、`run.mjs`、四个必要lib模块、`runner.test.mjs`、metrics规定表头及results本地忽略文件。标准node/git/codex子进程，无npm运行时依赖、宿主绝对路径或软链；fixture与冻结资源在工作区外，附件树用base64 JSON保留，不引入外部可执行测试树。
+- source-path显式读取当前SKILL及其资源；冻结技能/全部references/schema/scripts/fixture/expected/assertion/runner来源hash。断言和checker只用运行自己的冻结副本；每repeat重新复制干净fixture，首轮后完整first快照供二轮比较；毫秒UTC和UUID唯一结果。失败保留原始JSONL、stderr、最终消息、快照/树与现场状态；CSV转义、未知用量留空，缺规定轮次用量汇总null。
+- 正常加载用户provider，请求sol/low，两次公开config/read在独立cwd确认8MCP逐项禁用、notify空、plugins/hooks关、never/workspace-write；MCP标识只内存用于覆盖，不保存完整config/连接、不读取复制认证。实际后端模型/effort未知，source-path不证明native loader或物理隔离。
+- 唯一真实命令 `rtk proxy evals/run.sh --fixture f1 --skill vic-bootstrap` exit0，run_id `2026-10-14T10-51-01-688Z-0.1.0-f1-single-app-vic-bootstrap-r1-376d3086-164f-438f-925f-82bb1f41535e`。两轮exec exit0，各有完整SKILL读取item_4与一个turn.completed；首轮固定断言29pass/0fail/1pending，二轮30/0/0，全树added/deleted/changed均空，两轮checker 0error/0warn。execution_completed/l2_pass/pass均true；input685274+output6033=tokens691307，cached578176另存，耗时282.532秒。真实CSV另存ignored附件，提交metrics仅表头。
+- 真实回合采用运行前旧绑定：run.mjs SHA256 `46a62e417d79ee9a7a6a63906149888a54ce6b73b496679e0bc2c087da413097`。结束后按协调裁定将发布默认prompt改标准cat及遵守适用guidance，RTK仅可选 `--rtk`；本次实际RTK指导来自用户/brief，26条完成命令均RTK前缀且exit0。没有重跑模型或改写原结果。
+- 最终四文件run.mjs/config.mjs/events.mjs/files.mjs相对真实绑定有差异：提示RTK可选化、首命令完整读取/非法事件边界、缺规定轮次用量与known_usage、provider一致性及运行前来源复核、中断/清理/metrics错误保留、全轮L2与checker汇总、特殊树条目只归档及Git fsmonitor关闭。技能、fixture、expected、checker/assertion未改；最终源码未真实执行模型。最终解析器对旧原始两轮事件复核errors=[]、读取/用量一致，单列final-runner-verification.json，不冒充新系列。
+- 最终确定性验证：当前Node和官方Node18.20.8各8/8运行器机制测试通过；无RTK PATH下标准cat真实执行exit0，RTK提示只随可选标志；真实assert接口捕获二轮隐藏文件、删除和空目录变化。`rtk proxy node --test tests/*.test.mjs evals/runner.test.mjs` 48/48通过；`rtk git diff --check` exit0。
+- ignored报告T09-report.md及唯一结果附件完整保留。规定f1 L2与执行完成分层通过；固定保护断言通过，命令级审阅未见安装/联网包管理器或禁读代理配置，但未独立监测网络/系统副作用，不宣称无外部副作用已验证。仅一次repeat，不计最终M1三次系列，不替代f2–f4、附加语义或native loader验收。T09保持🟡待完整独立票审；本次不push、不发布。
