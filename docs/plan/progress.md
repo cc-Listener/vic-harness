@@ -577,3 +577,10 @@ Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
 - R1/R2均ADDRESSED，spec/质量通过，T09可完成。真实后来源差异仍披露：仅run.sh与旧真实binding相同，另外五runtime不同；旧真实执行加最终确定性复核足够本票，不宣称最终源码已真实执行，不计M1三次。完整证据在ignored T09-review.md、T09-fix-report.md、T09-fix-review.md。
 - 非阻塞P3：通过stdin的 `node --input-type=module -` 导入run.mjs时realpath('-')报ENOENT，文件脚本导入/公开run.sh正常；后续若需此非公开模块复用再处理。进程组清理不承诺回收主动脱离组的进程，副作用不自动审计。
 - T01–T09已完成独立票审，M1工程文档收尾及最终同源三次评测、安装发现、独立里程碑审查仍待执行；未打tag、未发布。
+
+### 2026-10-14 M1 工程文档收尾
+
+- T01–T09 独立票审完成后，按协调放行仅更新 README、CHANGELOG、plugin description/interface 与本记录；version 保持 0.1.0 开发未发布。README 面向使用者说明四项已实现能力、learn/prune 占位、标准安装/检查/评测入口和调用边界。
+- 保留自定义合同只读受限、无 drift/refresh-log、正式 open incidents、source-path 与安装发现分证；M1 最终同源三次系列、native 业务 loader、人工体验仍待验。Matt 固定 SHA 本地接线与物理待验、UA 未集成及 CI 真实 PR 待验均如实披露。
+- 实际 `rtk proxy node evals/run.mjs --help` exit0，与 README 的 repeat/layer/model/effort/timeout 及可选 --rtk 一致；轻量脚本确认 VERSION_MATCH/JSON_PARSE/METADATA_SCOPE/LOCAL_LINKS/STANDARD_COMMANDS 均 true；`rtk git diff --check` exit0。未运行模型、安装、全套测试或发布。
+- ignored 报告 M1-release-docs-report.md；本次文字与 metadata 待独立审查，最终技术验收由协调随后冻结同源执行，不以文档收尾替代发布验收。
