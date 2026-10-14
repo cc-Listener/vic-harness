@@ -1,0 +1,274 @@
+# M2 日志格式；vic-agents 真正 no-op 零写入的裁定优先。
+$schema: https://json-schema.org/draft/2020-12/schema
+title: vic-harness 只追加刷新日志
+description: 文件内容是条目数组；历史不改写，超过 200 条由 vic-prune 归档。M1 不要求生成日志。
+type: array
+items:
+  anyOf:
+  - $ref: '#/$defs/vic-bootstrap'
+  - $ref: '#/$defs/vic-agents'
+  - $ref: '#/$defs/vic-learn'
+  - $ref: '#/$defs/vic-prune'
+$defs:
+  vic-bootstrap:
+    type: object
+    additionalProperties: false
+    properties:
+      at:
+        type: string
+        pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$
+      skill:
+        const: vic-bootstrap
+      plugin_version:
+        type: string
+        minLength: 1
+      commit:
+        type: string
+        pattern: ^[0-9a-f]{7,40}$
+      mode:
+        type: string
+        enum:
+        - bootstrap
+        - refresh
+        - no-op
+        - app-deep
+      affected_artifacts:
+        type: array
+        items:
+          $ref: '#/$defs/path'
+      uncertainty:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      notes:
+        type: string
+      depth_scope:
+        type: string
+        enum:
+        - repo
+        - repo+app
+      app_targets:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      placement_strategy:
+        type: string
+        enum:
+        - root-docs
+        - app-local-docs
+      trigger_evidence:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      unchanged_artifacts:
+        type: array
+        items:
+          $ref: '#/$defs/path'
+    required:
+    - at
+    - skill
+    - plugin_version
+    - commit
+    - mode
+    - depth_scope
+    - app_targets
+    - placement_strategy
+    - trigger_evidence
+    - affected_artifacts
+    - unchanged_artifacts
+    - uncertainty
+    - notes
+  vic-learn:
+    type: object
+    additionalProperties: false
+    properties:
+      at:
+        type: string
+        pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$
+      skill:
+        const: vic-learn
+      plugin_version:
+        type: string
+        minLength: 1
+      commit:
+        type: string
+        pattern: ^[0-9a-f]{7,40}$
+      mode:
+        type: string
+        enum:
+        - learn
+        - no-op
+      affected_artifacts:
+        type: array
+        items:
+          $ref: '#/$defs/path'
+      uncertainty:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      notes:
+        type: string
+      depth_scope:
+        type: string
+        enum:
+        - repo
+        - repo+app
+      app_targets:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      placement_strategy:
+        type: string
+        enum:
+        - root-docs
+        - app-local-docs
+      trigger_evidence:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      unchanged_artifacts:
+        type: array
+        items:
+          $ref: '#/$defs/path'
+    required:
+    - at
+    - skill
+    - plugin_version
+    - commit
+    - mode
+    - depth_scope
+    - app_targets
+    - placement_strategy
+    - trigger_evidence
+    - affected_artifacts
+    - unchanged_artifacts
+    - uncertainty
+    - notes
+  vic-prune:
+    type: object
+    additionalProperties: false
+    properties:
+      at:
+        type: string
+        pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$
+      skill:
+        const: vic-prune
+      plugin_version:
+        type: string
+        minLength: 1
+      commit:
+        type: string
+        pattern: ^[0-9a-f]{7,40}$
+      mode:
+        type: string
+        enum:
+        - prune
+        - no-op
+      affected_artifacts:
+        type: array
+        items:
+          $ref: '#/$defs/path'
+      uncertainty:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      notes:
+        type: string
+      depth_scope:
+        type: string
+        enum:
+        - repo
+        - repo+app
+      app_targets:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      placement_strategy:
+        type: string
+        enum:
+        - root-docs
+        - app-local-docs
+      trigger_evidence:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      unchanged_artifacts:
+        type: array
+        items:
+          $ref: '#/$defs/path'
+    required:
+    - at
+    - skill
+    - plugin_version
+    - commit
+    - mode
+    - depth_scope
+    - app_targets
+    - placement_strategy
+    - trigger_evidence
+    - affected_artifacts
+    - unchanged_artifacts
+    - uncertainty
+    - notes
+  vic-agents:
+    type: object
+    additionalProperties: false
+    properties:
+      at:
+        type: string
+        pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$
+      skill:
+        const: vic-agents
+      plugin_version:
+        type: string
+        minLength: 1
+      commit:
+        type: string
+        pattern: ^[0-9a-f]{7,40}$
+      mode:
+        const: agents-config
+      affected_artifacts:
+        type: array
+        items:
+          $ref: '#/$defs/path'
+        minItems: 1
+      uncertainty:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      notes:
+        type: string
+      models_checked_at:
+        type: string
+        pattern: ^\d{4}-\d{2}-\d{2}$
+      agent_fields_checked_at:
+        type: string
+        pattern: ^\d{4}-\d{2}-\d{2}$
+      source_urls:
+        type: array
+        items:
+          type: string
+          pattern: ^https?://[^\s]+$
+    required:
+    - at
+    - skill
+    - plugin_version
+    - commit
+    - mode
+    - affected_artifacts
+    - uncertainty
+    description: 仅文件改动、核验日期、来源 URL 与未确认项。真正 no-op 不追加日志。单次判断及 bootstrap 深度字段禁止写入。
+  path:
+    type: string
+    minLength: 1
+    description: 相对仓库根的文件或目录路径；存在性与用户绝对路径由 C02/C06 检查。仅 watch_paths 支持 glob。
