@@ -45,7 +45,10 @@ yaml_paths:
     equals: contracts/project-context.yaml
   - file: contracts/apps/web-project-context.yaml
     path: project_map.entry_chain
-    equals: [apps/web/src/main.tsx, apps/web/src/bootstrap.tsx, apps/web/src/router/index.tsx]
+    # 只允许两条完整精确链；HTML module script 是有源码依据的可选起点。
+    contains_any:
+      - [apps/web/src/main.tsx, apps/web/src/bootstrap.tsx, apps/web/src/router/index.tsx]
+      - [apps/web/index.html, apps/web/src/main.tsx, apps/web/src/bootstrap.tsx, apps/web/src/router/index.tsx]
   - file: contracts/apps/web-project-context.yaml
     path: project_map.guarded_paths[*].path
     contains: apps/web/src/request/interceptors.ts

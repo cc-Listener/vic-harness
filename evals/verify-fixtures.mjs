@@ -165,6 +165,37 @@ try {
   await corrupt(four, 'contracts/project-context.yaml', (bytes) => { const data = JSON.parse(bytes); data.uncertainty.missing_information = []; return JSON.stringify(data); }, 'yaml_paths:contracts/project-context.yaml:uncertainty.missing_information:not_empty');
   await corrupt(four, 'contracts/project-context.yaml', (bytes) => { const data = JSON.parse(bytes); data.component_contract.systems = [{ name: '虚构组件库', path: 'main.py', preferred: true }]; return JSON.stringify(data); }, 'yaml_paths:contracts/project-context.yaml:component_contract.systems:equals');
   const two = cases['f2-monorepo'];
+  // 使用完整真实 fixture 与理想产物，仅替换入口链；每个变体独立冻结 first。
+  const chainFile = path.join(two.root, 'contracts/apps/web-project-context.yaml');
+  const chainOriginal = await readFile(chainFile);
+  const coreChain = JSON.parse(chainOriginal).project_map.entry_chain;
+  const htmlChain = ['apps/web/index.html', ...coreChain];
+  const chainId = 'yaml_paths:contracts/apps/web-project-context.yaml:project_map.entry_chain:contains_any';
+  const chainCases = [
+    ['main 完整链', coreChain, true], ['HTML 完整链', htmlChain, true],
+    ...coreChain.map((_, index) => [`缺核心项 ${index}`, coreChain.filter((_, offset) => offset !== index), false]),
+    ['HTML 链缺 bootstrap', htmlChain.filter((value) => value !== coreChain[1]), false],
+    ['乱序', [coreChain[1], coreChain[0], coreChain[2]], false],
+    ['HTML 起点乱序', [...coreChain, 'apps/web/index.html'], false],
+    ['无依据前缀', ['apps/admin/src/main.tsx', ...coreChain], false],
+    ['无依据后缀', [...htmlChain, 'apps/web/src/request/index.ts'], false],
+    ['额外中间路径', [coreChain[0], 'apps/web/src/request/index.ts', ...coreChain.slice(1)], false],
+    ['重复核心项', [...coreChain, coreChain[2]], false],
+  ];
+  try {
+    for (const [name, chain, accepted] of chainCases) {
+      const data = JSON.parse(chainOriginal); data.project_map.entry_chain = chain;
+      await writeFile(chainFile, JSON.stringify(data));
+      const variantFirst = path.join(temp, 'f2-chain-first.json');
+      run(['snapshot', '--root', two.root, '--expected', two.expected, '--out', variantFirst, '--json']);
+      const result = run(two.args.map((arg) => arg === two.first ? variantFirst : arg), accepted ? 0 : 1);
+      const assertion = result.assertions.find((entry) => entry.id === chainId);
+      assert(assertion, chainId); assert.equal(assertion.pass, accepted);
+      assert.deepEqual(assertion.expected, [coreChain, htmlChain]);
+      assert(result.assertions.filter((entry) => entry.id !== chainId).every((entry) => entry.pass));
+      record(`f2 入口链:${name}:${accepted ? '接受' : '拒绝'}`);
+    }
+  } finally { await writeFile(chainFile, chainOriginal); }
   await corrupt(two, 'contracts/project-context.yaml', (bytes) => { const data = JSON.parse(bytes); data.project_map.guarded_paths = [guard('GP-DUP-001', 'apps/web/src/request/interceptors.ts')]; return JSON.stringify(data); }, 'yaml_paths:contracts/project-context.yaml:project_map.guarded_paths[*].path:excludes');
   await write(one.root, '.codex/agents/topology.yaml', '不应生成的平行层');
   assert(run(one.args, 1).assertions.some((entry) => entry.id === 'files_absent:.codex/agents/topology.yaml' && !entry.pass)); record('files_absent:不生成平行层'); await rm(path.join(one.root, '.codex'), { recursive: true });

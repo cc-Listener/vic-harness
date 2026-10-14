@@ -604,3 +604,9 @@ Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
 - 独审明确不可发布。按AGENTS每票新上下文，T05首轮交付检查、T09评测材料隔离、T04两种完整入口链表示分别限定修复，组成同一里程碑修复波，随后统一独立复审。修复源与新定义冻结后才另行预登记新系列；不直接续抽同源样本凑通过。原票历史验收不删除，本表重开三票记录当前剩余修复。
 - 真实apple-tools技术试用和incidents保留：bootstrap仍为自定义合同restricted零写、132error/3warn且刷新未完成；agents完整语义缺陷仍open。人工正常使用体验尚未闭合，技术代理不能代签；M2/T10尚未启动。版本仍0.1.0开发未发布，无tag/push。
 - 本地ignored完整证据：M1-final-validation-report.md（勘误v2）、M1-milestone-review.md、M1-final-evidence/、M1-review-evidence/。三份修复简报为T04/T05/T09-M1-fix-brief.md，保留全部旧失败与审查记录。
+
+### 2026-10-14 T04 M1 入口链表示限定修复（待统一独审）
+
+- fresh 实现上下文仅修改 f2 expected 与既有 verify-fixtures：使用既有 contains_any 深度精确比较，接受 main→bootstrap→router 和 HTML→main→bootstrap→router 两条完整数组。HTML 模块脚本的连接有 fixture 源码依据，不增加前缀、子序列或路径归一化规则。
+- 新增两条合法链及十条错误链回归；缺核心项、乱序、无依据前后缀/中间路径、重复项均拒绝，其余断言必须仍通过。实现者实际运行当前 Node25.8.1 与 Node18.20.8 的 evals/verify-fixtures.mjs，均 exit0、T04_VERIFIED=102（原90项保持）。协调检查两文件差异与 diff --check 通过，产品和回归共35增/1删。
+- 报告 ignored T04-M1-fix-report.md；未运行模型、未修改其他 fixtures/断言器/旧 expected 或 raw。旧 f2 r1 仍失败，新表示只用于未来冻结系列。T04 保持🟡，等待三票修复后的统一独立复验，不以确定性测试替代发布验收。
