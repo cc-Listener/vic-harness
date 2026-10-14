@@ -632,3 +632,10 @@ Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
 - 唯一必须修改为新增T05 coverage CLI入口比较未规范化系统路径。两Node实际以macOS临时bundle的/var别名调用均exit0且stdout/stderr空；同文件真实路径调用才有首轮缺口JSON。runner提示中的bundleRoot合法保留该别名，故不能依赖模型自行规避。独审判P1，T05及集成 NOT ADDRESSED，当前不可冻结新模型系列。
 - 首次保留Git archive普通文件0664的解包策略下，既有verify-fixtures固定chmod644恢复会导致权限断言失败；独审在旧基线两Node复现相同失败，非本diff引入。两种解包策略、失败和通过输出均保留，列既有可移植性限制，不删证据或改范围换通过。后续必须继续分开报告归档mode与实际输入/两轮mode。
 - ignored M1-fix-review.md及44份M1-fix-review-evidence附件记录完整依据。fresh T05别名修复上下文已启动，只改helper入口及必要回归，完成后限定复验；T04/T09恢复完成，旧9/12/f2 1/3和不可发布基线不变。第二次系列12槽位与新脚本仅准备，尚无模型调用、安装、tag或push。
+
+### 2026-10-14 T05 M1 覆盖辅助路径别名修复（待限定复验）
+
+- fresh 修复仅改 coverage.mjs 的主入口识别及 bootstrap-coverage.test.mjs。argv 文件先 realpath 再比较模块URL；无argv、stdin/eval非文件入口仅导出API，不读取CLI stdin或输出。覆盖算法、反馈JSON及退出码未改，无新依赖。
+- 新回归从真实发布资源构建外部bundle，以系统别名/规范路径各运行首轮和二轮；首轮exit1且11反馈，二轮exit0且0反馈，目标及bundle完整字节/权限保持。stdin模块、eval无argv/eval非文件argv、普通文件纯导入均exit0且输出空。修改前新测试正确红为7/8；修复后双Node定向8/8、相关测试29/29通过。
+- 协调补验发现新测试误假设所有macOS TMPDIR都带别名：TMPDIR=/private/tmp时7/8。提交前已改为测试仅使用系统既有/tmp别名建立自己的bundle临时目录，不改变用户TMPDIR、不创建或发布软链。最终两Node×默认/规范TMPDIR四组合均8/8、无跳过，全部实际执行双路径/零写/纯导入；diff --check通过。
+- ignored T05-M1-alias-fix-report.md保留红绿过程、实际命令及限制。当前未运行新模型或重做无关测试，未修既有verify-fixtures权限假设。T05保持🟡，提交后交原独立审查者只复验该P1和本次直接回归。

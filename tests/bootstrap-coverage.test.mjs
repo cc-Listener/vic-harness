@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, mkdir, writeFile, rm, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { load, dump } from '../scripts/vendor/js-yaml.mjs';
+import { tree as snapshot, restore } from '../evals/lib/files.mjs';
+import { publicationEntries } from '../evals/lib/isolation.mjs';
 import { checkCoverage } from '../skills/vic-bootstrap/scripts/coverage.mjs';
 
 const evidence = new URL('./fixtures/bootstrap-coverage/',import.meta.url);
@@ -96,5 +98,62 @@ test('真实反例的命令行反馈退出非零；补齐后退出零且不写�
     assert.equal(result.status,round === 'first' ? 1 : 0,result.stderr);
     assert.equal(JSON.parse(result.stdout).status,round === 'first' ? 'incomplete' : 'covered-within-scope');
     for (const [path,item] of Object.entries(tree)) if (item.kind==='file') assert.deepEqual(await readFile(join(root,path)),Buffer.from(item.base64,'base64'));
+  }
+});
+
+
+test('真实发布 bundle 的系统别名和规范路径均执行覆盖 CLI，并保持整树字节与权限',async t => {
+  // macOS 的 TMPDIR 可能已是规范路径；使用现成 /tmp 系统别名，随后验证它确实指向同一文件。
+  const parent = await mkdtemp(join(process.platform === 'darwin' ? '/tmp' : tmpdir(),'coverage-bundle-'));
+  t.after(() => rm(parent,{recursive:true,force:true}));
+  const repository = fileURLToPath(new URL('../',import.meta.url));
+  const frozen = {};
+  for (const directory of ['skills','schemas','scripts']) {
+    for (const [path,item] of Object.entries(await snapshot(join(repository,directory)))) frozen[`${directory}/${path}`] = item;
+  }
+  const bundle = join(parent,'bundle');
+  await restore(publicationEntries(frozen),bundle);
+  const alias = join(bundle,'skills/vic-bootstrap/scripts/coverage.mjs');
+  const canonical = await realpath(alias);
+  if (process.platform === 'darwin') assert.notEqual(alias,canonical,'macOS /tmp 系统别名应实际覆盖不同 argv 路径');
+  assert.equal(await realpath(alias),canonical);
+  const bundleBefore = await snapshot(bundle);
+  for (const round of ['first','second']) {
+    const {root,sources} = await replay(t,round);
+    const before = await snapshot(root);
+    for (const script of [alias,canonical]) {
+      const result = spawnSync(process.execPath,[script,root],{input:JSON.stringify({sources}),encoding:'utf8',timeout:5000});
+      assert.equal(result.error,undefined);
+      assert.equal(result.stderr,'');
+      assert.equal(result.status,round === 'first' ? 1 : 0,`实际 CLI：${round} ${script}`);
+      const feedback = JSON.parse(result.stdout);
+      assert.equal(feedback.status,round === 'first' ? 'incomplete' : 'covered-within-scope');
+      assert.equal(feedback.findings.length,round === 'first' ? 11 : 0);
+      assert.equal(feedback.findings.filter(f => f.kind === 'gap' && /VG/.test(f.message)).length,round === 'first' ? 3 : 0);
+      assert.equal(feedback.findings.filter(f => /PA 定义重复/.test(f.message)).length,round === 'first' ? 2 : 0);
+      assert.deepEqual(await snapshot(root),before);
+    }
+  }
+  assert.deepEqual(await snapshot(bundle),bundleBefore);
+});
+
+test('stdin、无 argv 和普通文件纯导入不读取 CLI 输入或输出反馈',async t => {
+  const root = await mkdtemp(join(tmpdir(),'coverage-import-'));
+  t.after(() => rm(root,{recursive:true,force:true}));
+  const url = new URL('../skills/vic-bootstrap/scripts/coverage.mjs',import.meta.url).href;
+  const program = `await import(${JSON.stringify(url)});`;
+  const importer = join(root,'importer.mjs');
+  await writeFile(importer,program);
+  for (const [args,input] of [
+    [['--input-type=module','-'],program],
+    [['--input-type=module','--eval',program],'invalid CLI JSON'],
+    [['--input-type=module','--eval',`process.argv[1] = 'missing-entry.mjs'; ${program}`],'invalid CLI JSON'],
+    [[importer],'invalid CLI JSON']
+  ]) {
+    const result = spawnSync(process.execPath,args,{input,encoding:'utf8',timeout:5000});
+    assert.equal(result.error,undefined);
+    assert.equal(result.status,0,result.stderr);
+    assert.equal(result.stdout,'');
+    assert.equal(result.stderr,'');
   }
 });

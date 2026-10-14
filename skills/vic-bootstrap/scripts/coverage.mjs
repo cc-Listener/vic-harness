@@ -1,4 +1,4 @@
-import { readFile, lstat } from 'node:fs/promises';
+import { readFile, lstat, realpath } from 'node:fs/promises';
 import { resolve, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { load } from '../../../scripts/vendor/js-yaml.mjs';
@@ -90,7 +90,12 @@ export async function checkCoverage(root, input = {}) {
   return { status: findings.length ? 'incomplete' : 'covered-within-scope', findings, checked, limitations: ['有限命令与源码模式；review 需回读裁定，不自动生成 GP/PA/LI。未输入的观察事实、一般语义与人读准确性仍须双向人工核对。'] };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+// Node 模块 URL 已解析系统路径别名；argv 需使用同一规范路径。stdin/eval 导入没有常规入口。
+let isMain = false;
+try {
+  if (process.argv[1]) isMain = import.meta.url === pathToFileURL(await realpath(process.argv[1])).href;
+} catch { /* 非文件入口只导出 API，不读取 stdin。 */ }
+if (isMain) {
   try {
     let raw = ''; for await (const chunk of process.stdin) raw += chunk;
     const result = await checkCoverage(process.argv[2], raw.trim() ? JSON.parse(raw) : {});
