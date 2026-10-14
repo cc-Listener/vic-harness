@@ -26,7 +26,7 @@ files_unchanged:
 sections_unchanged:
   - { file: AGENTS.md, heading: '## Agent skills' }
 yaml_paths:
-  - { path: 'project_map.top_level_modules[*].path', contains: src }
+  - { path: 'project_map.top_level_modules[*].path', contains_any: [src, src/main.py] }
   - { path: 'component_contract.preferred_abstractions', equals: [] }
 forbidden_text:
   - { glob: 'docs/component-contract.md', pattern: 'Next\.js|@/ui|@acme/ui' }

@@ -18,7 +18,7 @@ const HELP = `用法（快照路径必须在目标仓库之外，父目录须已
 first 阶段的 idempotent 是 pending，只有 final 通过才算完整验收。
 快照扫描整个真实文件树（含未跟踪、忽略和空目录），仅排除根 .git。
 不跟随软链；外部段落按原始字节比较，忽略 fenced code 中的假标题。
-yaml_paths 支持点号、[*]，操作为 contains/excludes（值精确匹配）、equals、not_empty。
+yaml_paths 支持点号、[*]，操作为 contains/excludes（值精确匹配）、contains_any（非空候选数组）、equals、not_empty。
 forbidden_text.pattern 为 JavaScript 正则；glob 支持 *、?、**，**/ 允许零层目录。
 退出码：0=当前阶段通过，1=断言失败，2=参数、配置或基线错误。`;
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -79,7 +79,7 @@ function validateExpected(expected) {
     if (!Array.isArray(expected[key])) fail(`${key} 必须为数组`);
     for (const item of expected[key]) {
       if (!object(item)) fail(`${key} 条目必须为对象`);
-      const allowed = key === 'sections_unchanged' ? ['file', 'heading'] : key === 'yaml_paths' ? ['file', 'path', 'contains', 'excludes', 'equals', 'not_empty'] : ['glob', 'pattern', 'flags'];
+      const allowed = key === 'sections_unchanged' ? ['file', 'heading'] : key === 'yaml_paths' ? ['file', 'path', 'contains', 'contains_any', 'excludes', 'equals', 'not_empty'] : ['glob', 'pattern', 'flags'];
       if (Object.keys(item).some((field) => !allowed.includes(field))) fail(`${key} 条目含未知字段`);
       if (key === 'sections_unchanged') {
         relativePath(item.file);
@@ -87,8 +87,9 @@ function validateExpected(expected) {
       } else if (key === 'yaml_paths') {
         relativePath(item.file ?? 'contracts/project-context.yaml');
         pathTokens(item.path);
-        const ops = ['contains', 'excludes', 'equals', 'not_empty'].filter((op) => Object.hasOwn(item, op));
+        const ops = ['contains', 'contains_any', 'excludes', 'equals', 'not_empty'].filter((op) => Object.hasOwn(item, op));
         if (ops.length !== 1 || (ops[0] === 'not_empty' && item.not_empty !== true)) fail(`YAML 路径必须且只能指定一个操作：${item.path}`);
+        if (ops[0] === 'contains_any' && (!Array.isArray(item.contains_any) || item.contains_any.length === 0)) fail(`contains_any 必须为非空候选数组：${item.path}`);
       } else {
         globRegex(item.glob);
         if (typeof item.pattern !== 'string' || !item.pattern) fail('forbidden_text.pattern 不可为空');
@@ -216,8 +217,10 @@ async function check(root, expected, current, before, first, phase) {
       } catch (error) { yamlCache.set(file, { error: error.message }); }
     }
     const parsed = yamlCache.get(file), values = parsed.error ? [] : yamlValues(parsed.data, item.path);
-    const op = ['contains', 'excludes', 'equals', 'not_empty'].find((key) => Object.hasOwn(item, key));
-    const matches = values.some((value) => isDeepStrictEqual(value, item[op]));
+    const op = ['contains', 'contains_any', 'excludes', 'equals', 'not_empty'].find((key) => Object.hasOwn(item, key));
+    const matches = values.some((value) => op === 'contains_any'
+      ? item.contains_any.some((candidate) => isDeepStrictEqual(value, candidate))
+      : isDeepStrictEqual(value, item[op]));
     const passed = !parsed.error && (op === 'excludes' ? !matches : op === 'not_empty' ? values.some((value) => (typeof value === 'string' || Array.isArray(value)) && value.length > 0) : matches);
     add(`yaml_paths:${file}:${item.path}:${op}`, passed, { file, path: item.path, operation: op, expected: item[op], actual: parsed.error ?? values });
   }

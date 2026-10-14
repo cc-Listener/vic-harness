@@ -198,5 +198,61 @@ try {
   const wrongArgs = one.args.map((arg) => arg === one.first ? wrongFirst : arg);
   assert(run(wrongArgs, 1).tree_changes.added.includes('contracts/project-context.yaml')); record('baseline:不能以运行前树代替第一次生成后的树');
   assert.equal(run(one.args).pass, true); record('破坏用例还原后重新通过');
+  // 两个替代表示用真实 fixture 的完整 expected 验收，并独立生成新 first。
+  for (const [fixture, mutate] of [
+    ['f2-monorepo', (data) => { data.conventions.validation_gates[0].command = 'pnpm run lint'; }],
+    ['f3-legacy-layers', (data) => { data.project_map.top_level_modules[0].path = 'src/main.py'; data.project_map.top_level_modules[0].role = '唯一源码模块，定义 greeting 函数和直接执行入口'; }],
+  ]) {
+    const item = cases[fixture], file = path.join(item.root, 'contracts/project-context.yaml');
+    const original = await readFile(file);
+    try {
+      const data = JSON.parse(original); mutate(data); await writeFile(file, JSON.stringify(data));
+      const alternateFirst = path.join(temp, `${fixture}-alternate-first.json`);
+      run(['snapshot', '--root', item.root, '--expected', item.expected, '--out', alternateFirst, '--json']);
+      assert.equal(run(item.args.map((arg) => arg === item.first ? alternateFirst : arg)).pass, true);
+      record(`${fixture}:替代表示完整 expected 与新 first 验收`);
+    } finally { await writeFile(file, original); }
+  }
+  // 显式候选集合仅做深度严格相等；不执行或归一化命令。
+  const candidateRoot = path.join(temp, 'candidates');
+  await mkdir(candidateRoot);
+  const candidateExpected = path.join(temp, 'candidates-expected.yaml');
+  const candidateBefore = path.join(temp, 'candidates-before.json');
+  async function candidateCase(name, rule, data, exit = 0) {
+    await write(candidateRoot, 'facts.yaml', data);
+    await writeFile(candidateExpected, typeof rule === 'string' ? rule : JSON.stringify({ yaml_paths: [{ file: 'facts.yaml', ...rule }] }));
+    const snapshotArgs = ['snapshot', '--root', candidateRoot, '--expected', candidateExpected, '--out', candidateBefore, '--json'];
+    if (exit === 2) run(snapshotArgs, 2);
+    else {
+      run(snapshotArgs);
+      const result = run(['check', '--root', candidateRoot, '--expected', candidateExpected, '--before', candidateBefore, '--phase', 'first', '--json'], exit);
+      assert.equal(result.assertions[0].pass, exit === 0);
+      if (typeof rule !== 'string') {
+        assert.deepEqual(result.assertions[0].expected, rule.contains_any ?? rule.contains);
+        if (typeof data !== 'string') assert(Array.isArray(result.assertions[0].actual));
+      }
+    }
+    record(`候选:${name}`);
+  }
+  const gateRule = { path: 'gates[*]', contains_any: ['pnpm lint', 'pnpm run lint'] };
+  for (const command of gateRule.contains_any) await candidateCase(command, gateRule, { gates: [command] });
+  for (const command of ['pnpm test', 'pnpm -r lint', 'eslint .', 'pnpm lint --fix', 'pnpm run lint --filter web', 'cd apps/web && pnpm lint', 'echo pnpm lint', 'pnpm lint && echo done', 'prefix pnpm run lint suffix']) {
+    await candidateCase(`拒绝命令 ${command}`, gateRule, { gates: [command] }, 1);
+  }
+  await candidateCase('存在性允许额外值', gateRule, { gates: ['pnpm test', 'pnpm lint'] });
+  await candidateCase('缺失路径', gateRule, { unrelated: [] }, 1);
+  await candidateCase('坏 YAML', gateRule, 'gates: [\n', 1);
+  const moduleRule = { path: 'modules[*]', contains_any: ['src', 'src/main.py'] };
+  for (const module of moduleRule.contains_any) await candidateCase(`模块 ${module}`, moduleRule, { modules: [module] });
+  for (const module of ['src/missing.py', 'main.py', 'src/main.py/extra', 'prefix/src', 'src/']) await candidateCase(`拒绝模块 ${module}`, moduleRule, { modules: [module] }, 1);
+  await candidateCase('对象深度严格相等', { path: 'values[*]', contains_any: [{ nested: [1, true] }] }, { values: [{ nested: [1, true] }] });
+  await candidateCase('对象类型差异', { path: 'values[*]', contains_any: [{ nested: [1, true] }] }, { values: [{ nested: ['1', true] }] }, 1);
+  await candidateCase('候选数组值深度相等', { path: 'values[*]', contains_any: [[1, 2]] }, { values: [[1, 2]] });
+  await candidateCase('旧 contains 数组精确匹配', { path: 'values', contains: [1, 2] }, { values: [1, 2] });
+  await candidateCase('旧 contains 数组不是候选集', { path: 'values[*]', contains: [1, 2] }, { values: [1, 2] }, 1);
+  for (const candidates of [[], 'pnpm lint', null, 1, {}]) await candidateCase(`坏候选 ${JSON.stringify(candidates)}`, { path: 'gates[*]', contains_any: candidates }, { gates: [] }, 2);
+  for (const extra of ['contains', 'excludes', 'equals', 'not_empty']) await candidateCase(`混用 ${extra}`, { ...gateRule, [extra]: true }, { gates: [] }, 2);
+  await candidateCase('未知操作', { path: 'gates[*]', contains_some: ['pnpm lint'] }, { gates: [] }, 2);
+  await candidateCase('expected 坏 YAML', 'yaml_paths: [\n', { gates: [] }, 2);
   console.log(`T04_VERIFIED=${results.length}`);
 } finally { await rm(temp, { recursive: true, force: true }); }

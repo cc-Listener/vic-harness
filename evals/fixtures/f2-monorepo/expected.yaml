@@ -37,7 +37,7 @@ yaml_paths:
   - { path: 'project_map.repo_type', equals: monorepo }
   - { path: 'apps[*].contract', contains: contracts/apps/web-project-context.yaml }
   - { path: 'component_contract.preferred_abstractions[*].import', contains: '@acme/ui' }
-  - { path: 'conventions.validation_gates[*].command', contains: 'pnpm lint' }
+  - { path: 'conventions.validation_gates[*].command', contains_any: ['pnpm lint', 'pnpm run lint'] }
   # web 的具体 guarded path 属于子合同；根层仅导航，防止事实平行复制。
   - { path: 'project_map.guarded_paths[*].path', excludes: apps/web/src/request/interceptors.ts }
   - file: contracts/apps/web-project-context.yaml

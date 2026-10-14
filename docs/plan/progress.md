@@ -334,3 +334,25 @@ TEMP_FIXTURES_CLEANED=true
 
 - 其他实际验证：`rtk git diff --check -- skills/vic-agents` exit0；插件根 `rtk proxy node scripts/vic-check.mjs --agents --root . --json` exit0，error0/warn0，只证明空配置基线。初版验证脚本两次因节点计数口径错误失败，修正脚本后完整成功；产品结构未改变。
 - 边界与交接：未改checker/ADR/reference原件或试用附件，未写业务仓库、启动模型回合/代理、调整权限或安装依赖；已有授权/零写边界保留。真实模型行为、账户可用性、loader及权限仍未重新验证；限定复审只审通用文本与确定性证据，不能据此宣布真实行为通过。报告 `.superpowers/sdd/07-roadmap/T06-real-fix-report.md`。
+
+### 2026-10-14 T04 明确候选表示假阴性修复
+
+- 按独立 gate 审查及 f3 补充裁定修复两个过严事实断言。新增 contains_any：显式非空候选数组，路径解析值对至少一个候选深度严格相等；每条仅一个操作，空/非数组候选与混用操作配置错误 exit 2。旧 contains 对数组值仍精确匹配；没有子串、正则、命令归一化或执行 gate。
+- 仅修改 assert.mjs、verify-fixtures.mjs、f2-monorepo/expected.yaml、f3-legacy-layers/expected.yaml 和本进度文件。f2 gate 只允许 pnpm lint / pnpm run lint；f3 模块只允许 src / src/main.py，其他 fixture 内容与断言不变。
+- 实际执行当前 Node v25.8.1 和 T03-node18.txt 指定官方 Node v18.20.8 的 evals/verify-fixtures.mjs；原 51 项全部通过，新 39 项覆盖错误脚本/内联 payload/参数/目录/拼接、错误模块路径、缺路径、坏 YAML、深层严格相等、旧 contains 数组语义及配置失败。两个真实 fixture 的替代表示均用完整 expected 和独立新 first 验证。
+
+```text
+当前 Node v25.8.1：
+通过 f2-monorepo:替代表示完整 expected 与新 first 验收
+通过 f3-legacy-layers:替代表示完整 expected 与新 first 验收
+T04_VERIFIED=90
+EXIT=0
+官方 Node v18.20.8：
+通过 f2-monorepo:替代表示完整 expected 与新 first 验收
+通过 f3-legacy-layers:替代表示完整 expected 与新 first 验收
+T04_VERIFIED=90
+EXIT=0
+```
+
+- 两个 mjs 的 node --check 与限定四文件 git diff --check 均 exit 0。报告在忽略目录 T04-representations-fix-report.md。contains_any 只证明正确值存在，不禁止额外错误值，已专门回归此边界。
+- 旧 T05 失败记录、旧 before/first 与 expectedHash 未修改或改绿；新 expected 不可混用旧快照冒充重验。没有运行真实模型，本次仅确定性断言修复；T04 保持 🟡，等待独立限定复审。
