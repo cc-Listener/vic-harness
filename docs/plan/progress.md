@@ -11,11 +11,11 @@
 | T02 | 合同 schema v2 | M1 | ✅ | 2026-10-14 | 标准 JSON Schema 小子集；58 个 v1 业务路径、163 个项目示例路径验收通过；独立审查可合入 |
 | T03 | vic-check：解析与合同规则 | M1 | ✅ | 2026-10-14 | 应用文档扫描及C09命令代理误报已修；独立复审两Node40/40、14边界探针、真实f2只读检查均通过 |
 | T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 特殊文件名与合法表示误拒绝均已修复；两Node90项及各25独立探针通过；限定复审可合入 |
-| T05 | vic-bootstrap v2 | M1 | 🟡 | | 新源0335d370原票f1–f4门槛齐，待完整独立票审；open P2/P3保留；luna规定L2 f1仅1/3，M1未通过 |
+| T05 | vic-bootstrap v2 | M1 | ✅ | 2026-10-14 | 24188fb完整独立票审通过；四fixture真实两轮/0error/全树no-op复验通过；open P2/P3已归档，M1稳定性未通过 |
 | T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 静态迁移与两次限定修复均独立通过；真实试用主动no-op/完整摘要已验证，仍有3项已披露输出缺陷移交T12，完整行为未通过 |
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
-| T08 | vic-router 与 vic-check skill 文本 | M1 | ⬜ | | |
-| T09 | 评测运行器 | M1 | ⬜ | | |
+| T08 | vic-router 与 vic-check skill 文本 | M1 | 🟡 | | T05/T06依赖已完成，独立新上下文实施中 |
+| T09 | 评测运行器 | M1 | 🟡 | | T04/T05依赖已完成，独立新上下文实施中；固定provider及请求条件 |
 | — | 🚩 发布 v0.1.0 | M1 | ⬜ | | |
 | T10 | 来源字段与过期检测 | M2 | ⬜ | | |
 | T11 | refresh-log | M2 | ⬜ | | |
@@ -489,3 +489,10 @@ OUTPUT_SCHEMA_ALL_PARSED_VALUES_UNCHANGED=true
 - bootstrap 记录请求 LI P2、真实二轮 refresh/树变化、外部段少一换行及普通入口展示 P3；agents 记录主会话绑定角色文件 P2、available 证据不足 P2（真实可用性未知）和空数组占位 P3。全部 open，不冒称已修复；agents 后续交 T12。
 - 协调实际复核八份原始 result：f1 false/true/false，f2 true/true，f3 false/true，f4 true；五份 pass 的二轮 added/deleted/changed 均空，f1 两份 fail 均改合同及组件文档。f1 规定 L2 1/3，其他尚未完成三次，M1未通过。
 - 两份文档17个相对链接存在；机器绝对路径和正文尾随空白扫描通过。仅文档归档，无新模型调用、产品变更、模板或自动学习；未改旧原始结果。T05提交 `24188fbb84a799c3aac45eceded6915ad3fc0331` 的完整独立票审正在进行。
+
+### 2026-10-14 T05 完整独立验收与后续放行
+
+- 独立审查提交 `24188fbb84a799c3aac45eceded6915ad3fc0331`（仅七文件）；spec通过、质量带open P2/P3接受，没有必须修改项。四份真实现场重新生成仓库外快照后独立重跑：f1最终30/0/0、f2 41/0/0、f3 23/0/0、f4 19/0/0；八次checker均exit0/error0，f3各有既有A06 warn1，其余warn0；四份first/final全树零差异。
+- 独立复核Git提交六blob/冻结/各run一致、31文件manifest及962ff57共享工具/d70792b断言来源一致；八回合完整SKILL、四refs、schema正文及完成/usage有正证据。153条原始完成命令及inline写入核查未见禁区读取或外部副作用；f3外部段262字节保持。
+- 原票可完成不等于发布通过：请求LI P2和普通入口展示P3仍open，真实失败不覆盖；luna f1仍1/3，其他未完成三次，native loader业务调用和真实试用等未由本票替代。报告/独立原始复验附件：ignored T05-final-review.md、T05-final-review-recheck.json、T05-final-review-events.json。
+- T08、T09按已完成依赖正式并行，互斥skill文本/evals目录，进度与提交串行；apple-tools bootstrap按已准备方案只做一次隔离技术试用，原仓库只读。任何受限合同处理不得宣称标准迁移或no-op。
