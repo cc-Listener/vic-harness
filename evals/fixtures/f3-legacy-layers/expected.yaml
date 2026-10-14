@@ -1,0 +1,32 @@
+# M1 只检查当前能力；不要求 M2 来源字段、watch_paths、日志或 integrations。
+files_exist:
+  - AGENTS.md
+  - docs/project-map.md
+  - docs/conventions.md
+  - docs/component-contract.md
+  - contracts/project-context.yaml
+files_absent:
+  - .codex/agents/topology.yaml
+  - .codex/agents/roles
+  - .codex/agents/bridges
+max_lines: { AGENTS.md: 120 }
+vic_check: { error: 0 }
+idempotent: true
+# M1 第二次运行须保持真实文件树不变，包括未跟踪和忽略文件。
+git_diff_only: []
+files_unchanged:
+  - .codex/agents/README.md
+  - docs/agents/workflow.md
+  - GLOSSARY.md
+  - GLOSSARY-MAP.md
+  - CODING_STANDARDS.md
+  - docs/adr/0001-greeting.md
+  - .ua/knowledge-graph.json
+  - src/main.py
+sections_unchanged:
+  - { file: AGENTS.md, heading: '## Agent skills' }
+yaml_paths:
+  - { path: 'project_map.top_level_modules[*].path', contains: src }
+  - { path: 'component_contract.preferred_abstractions', equals: [] }
+forbidden_text:
+  - { glob: 'docs/component-contract.md', pattern: 'Next\.js|@/ui|@acme/ui' }

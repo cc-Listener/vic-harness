@@ -1,0 +1,59 @@
+# M1 只检查当前能力；不要求 M2 来源字段、watch_paths、日志或 integrations。
+files_exist:
+  - AGENTS.md
+  - docs/project-map.md
+  - docs/conventions.md
+  - docs/component-contract.md
+  - contracts/project-context.yaml
+  - apps/web/AGENTS.md
+  - docs/apps/web/project-map.md
+  - docs/apps/web/conventions.md
+  - docs/apps/web/component-contract.md
+  - contracts/apps/web-project-context.yaml
+files_absent:
+  - .codex/agents/topology.yaml
+  - .codex/agents/roles
+  - .codex/agents/bridges
+max_lines: { AGENTS.md: 120, apps/web/AGENTS.md: 120 }
+vic_check: { error: 0 }
+idempotent: true
+# M1 第二次运行须保持真实文件树不变，包括未跟踪和忽略文件。
+git_diff_only: []
+files_unchanged:
+  - package.json
+  - pnpm-workspace.yaml
+  - apps/web/package.json
+  - apps/web/vite.config.ts
+  - apps/web/.env.production
+  - apps/web/src/main.tsx
+  - apps/web/src/bootstrap.tsx
+  - apps/web/src/router/index.tsx
+  - apps/web/src/request/interceptors.ts
+  - apps/admin/package.json
+  - packages/ui/package.json
+  - packages/ui/src/index.ts
+  - packages/ui/src/button/AcmeButton.tsx
+yaml_paths:
+  - { path: 'project_map.repo_type', equals: monorepo }
+  - { path: 'apps[*].contract', contains: contracts/apps/web-project-context.yaml }
+  - { path: 'component_contract.preferred_abstractions[*].import', contains: '@acme/ui' }
+  - { path: 'conventions.validation_gates[*].command', contains: 'pnpm lint' }
+  # web 的具体 guarded path 属于子合同；根层仅导航，防止事实平行复制。
+  - { path: 'project_map.guarded_paths[*].path', excludes: apps/web/src/request/interceptors.ts }
+  - file: contracts/apps/web-project-context.yaml
+    path: parent
+    equals: contracts/project-context.yaml
+  - file: contracts/apps/web-project-context.yaml
+    path: project_map.entry_chain
+    equals: [apps/web/src/main.tsx, apps/web/src/bootstrap.tsx, apps/web/src/router/index.tsx]
+  - file: contracts/apps/web-project-context.yaml
+    path: project_map.guarded_paths[*].path
+    contains: apps/web/src/request/interceptors.ts
+  - file: contracts/apps/web-project-context.yaml
+    path: project_map.guarded_paths[*].path
+    contains: apps/web/.env.production
+  - file: contracts/apps/web-project-context.yaml
+    path: component_contract.locate_index[*].import
+    contains: '@acme/ui'
+forbidden_text:
+  - { glob: 'docs/**/*.md', pattern: 'Next\.js' }

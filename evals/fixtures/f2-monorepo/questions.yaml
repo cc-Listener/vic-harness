@@ -1,0 +1,9 @@
+# L3 的题库，T04 不运行问答评分。
+- q: web 新增提交按钮，应从哪里 import，使用哪个符号？
+  must_contain: ['@acme/ui', AcmeButton]
+- q: web 的入口按什么文件顺序到达 router？
+  must_contain: [apps/web/src/main.tsx, apps/web/src/bootstrap.tsx, apps/web/src/router/index.tsx]
+- q: web 的具体项目合同在哪里？
+  must_contain: [contracts/apps/web-project-context.yaml]
+- q: 共享 UI 包的公开入口在哪里？
+  must_contain: [packages/ui/src/index.ts]

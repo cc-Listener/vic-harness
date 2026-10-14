@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "greeting",
+      "name": "greeting",
+      "filePath": "src/main.py",
+      "type": "function",
+      "description": "自有合成图谱节点"
+    }
+  ],
+  "edges": []
+}

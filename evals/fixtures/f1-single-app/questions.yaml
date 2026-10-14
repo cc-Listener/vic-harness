@@ -1,0 +1,9 @@
+# L3 的题库，T04 不运行问答评分。
+- q: 在设置页新增主要按钮，应从哪里 import，使用哪个符号？
+  must_contain: ['@/ui', AppButton]
+- q: 提交代码前已配置哪些静态检查命令？
+  must_contain: ['npm run lint', 'npm run typecheck']
+- q: 修改统一鉴权处理应先查哪个源码？
+  must_contain: [src/request/interceptors.ts]
+- q: 生产 API 地址由哪个文件中的哪个变量提供？
+  must_contain: [.env.production, VITE_API_BASE_URL]

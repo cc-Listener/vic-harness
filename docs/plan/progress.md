@@ -9,8 +9,8 @@
 | T00 | 建仓库并核验未决问题 | M0 | ✅ | 2026-10-14 | Q1–Q4、Q9 已写结论；独立审查可合入；完整 LLM 回合留 T09 |
 | T01 | 插件骨架 | M1 | ✅ | 2026-10-14 | 六技能隔离安装与发现验收通过；独立审查待定 |
 | T02 | 合同 schema v2 | M1 | ✅ | 2026-10-14 | 标准 JSON Schema 小子集；58 个 v1 业务路径、163 个项目示例路径验收通过；独立审查待定 |
-| T03 | vic-check：解析与合同规则 | M1 | ⬜ | | |
-| T04 | 评测 fixtures f1–f4 与断言器 | M1 | ⬜ | | |
+| T03 | vic-check：解析与合同规则 | M1 | 🟡 | | 正在实现 scripts/ 与 tests/；Node 18 解析器兼容性已验证 |
+| T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 四夹具与两基线断言器；Node 18/当前 Node 33 项确定性验收通过；独立审查待定 |
 | T05 | vic-bootstrap v2 | M1 | ⬜ | | |
 | T06 | vic-agents v2 | M1 | ⬜ | | |
 | T07 | vic-check：代理配置规则 | M1 | ⬜ | | |
@@ -149,6 +149,32 @@ T02_SCHEMA_AUDIT=PASS
 - 未完成 / 遗留：T03 的 vic-check 尚未实现，未声称已跑产品检查器或示例路径存在。跨文件 ID 唯一、根/子事实不重复、命令别名/导航 kind 一致、日期日历有效性等须语义检查；本次只实际审计示例 ID 和兼容值，schema 的边界已明示。M2 来源与漂移规则留 T10。
 - 给下个会话的提示：真实合同每文件一个 YAML 文档；完整教学 example 第一份根、第二份子，使用 `loadAll`。所有 `$ref` 是本文件引用，只需上述小子集；`version:1` 是兼容标记。C02 识别 absent/optional/detected 状态，根/子 ID 全集合查重；fixture 要建立示例文件，不能对插件根强测虚构路径存在。临时验证脚本和完整原始输出保留供独立审查。
 - 独立审查：`review_t02` 结论“可合入，无必须修改项”；重跑完整验收并补充独立探针，v1 字段覆盖、所有示例属性覆盖、M1/M2 必填边界、根/子隔离、agents no-op 日志约束、范围和差异检查均通过。实现提交 `c37b00b`。跨文件语义仍待 T03 产品实现。
+
+### 2026-10-14 T04 评测 fixtures f1–f4 与断言器
+- 做了什么：建立四个配置齐全的小型合成仓库和 M1 expected、L3 题库；新增 snapshot/check 断言器及可复跑的确定性验收入口。f3 的 300 行旧导航与外部文件全部自行编写，不复制第三方 skill 文本。所有 expected 的 `git_diff_only: []`，不提前要求来源字段、watch_paths、refresh-log 或 integrations。
+- 产出文件：`evals/assert.mjs`、`evals/verify-fixtures.mjs`、`evals/fixtures/f1-single-app/`、`f2-monorepo/`、`f3-legacy-layers/`、`f4-empty/`（各含 repo、expected.yaml、questions.yaml），共 62 个 evals 文件；本进度文件。完整报告保存在忽略的 `.superpowers/sdd/07-roadmap/T04-report.md`。
+- 断言接口：`snapshot --root <repo> --expected <yaml> --out <snapshot.json>` 仅向目标根外写快照；`check --root <repo> --expected <yaml> --before <before.json> --phase first --json` 验证首轮并明确 `idempotent` 待验；第一次完成后保存 `first` 快照，第二次用 `check ... --before <before.json> --first <first.json> --phase final --json` 完成幂等验收。before 只用于外部内容保留，first 用于第二次真实文件树比较；缺少 first 或复用同一基线文件以 exit 2 拒绝。
+- 验证命令与关键输出：`rtk proxy node evals/verify-fixtures.mjs` → exit 0，`T04_VERIFIED=33`；复用 T03 已核验的官方 Node 18.20.8 运行同一入口 → exit 0，`T04_VERIFIED=33`。四份手写理想产物都实际运行 `vic-check --all --json --root`，`summary.error=0`；随后保持第一次文件树并运行 final 检查，四份均通过。`rtk proxy node --test` 在 T03 当前工作树上 → tests 19 / pass 19 / fail 0，夹具没有被自动发现为业务测试。两个 mjs 的 `node --check` exit 0；静态检查：files=62、json=11、yaml=9、f3_lines=300、symlinks=0、user_absolute_paths=0、autodiscovered_business_tests=0。
+- 原始验收输出摘要：
+
+```text
+通过 f1-single-app:手写理想产物+真实vic-check
+通过 f2-monorepo:手写理想产物+真实vic-check
+通过 f3-legacy-layers:手写理想产物+真实vic-check
+通过 f4-empty:手写理想产物+真实vic-check
+通过 idempotent:新增未跟踪和忽略文件+目录
+通过 idempotent:删除第一次生成的未跟踪产物
+通过 idempotent:文件权限改动
+通过 snapshot:拒绝树内输出
+通过 snapshot:不跟随仓库外目录软链
+通过 baseline:不能以运行前树代替第一次生成后的树
+T04_VERIFIED=33
+```
+
+- 反向覆盖：行数超限、推荐 import 错误、坏 YAML/真实 checker error、外部文件变化、代码块内文字变化、CRLF 变化、重复外部标题、清空 uncertainty、虚构组件库、根/子重复 guarded fact、误生成平行层、直接/深层 docs 的虚构文本。文件树扫描包含未跟踪/忽略文件、目录、字节摘要与权限，仅排除根 `.git`；软链只记录目标，不跟随；输出路径经真实父目录解析防止软链污染根。失败项含具体 id、路径、expected/actual。
+- 未完成 / 遗留：手写理想产物只验证夹具和断言器；未执行真实 skill 或 LLM 评测，不证明 bootstrap 行为、L2 三次稳定性或 L3 答对率。真实 checker 来自并行 T03 实现的当前工作树，T03 自身仍须独立提交与审查；T04 不修改 scripts/tests。questions.yaml 留 T16 消费。
+- 给下个会话的提示：T05 在四夹具上实际调用 bootstrap；T09 按唯一前缀解析 f1 等短名，before/first 快照必须放在目标 repo 外，只有 final 通过才算完整 L2。M1 第二次不能写 refresh-log。`verify-fixtures.mjs` 可独立复跑、自动清理临时目录，不调用 LLM、不安装或运行业务依赖。
+- 独立审查：待定。
 
 ```
 ### <日期> <ticket ID> <模型>
