@@ -109,6 +109,46 @@ try {
     assert.equal(run(args).pass, true); record(`${fixture}:第二次真实树不变`);
     cases[fixture] = { root, expected, before, first, args };
   }
+  // 根级合法文件名不能触发 Object.prototype 的特殊属性语义。
+  const specialRoot = path.join(temp, 'special-names');
+  const specialExpected = path.join(temp, 'special-expected.yaml');
+  await mkdir(specialRoot);
+  await writeFile(specialExpected, 'idempotent: true\ngit_diff_only: []\n');
+  const specialBefore = path.join(temp, 'special-before.json');
+  const specialFirst = path.join(temp, 'special-first.json');
+  const specialSnapshot = ['snapshot', '--root', specialRoot, '--expected', specialExpected, '--json'];
+  const specialArgs = ['check', '--root', specialRoot, '--expected', specialExpected, '--before', specialBefore, '--first', specialFirst, '--json'];
+  run([...specialSnapshot, '--out', specialBefore]);
+  for (const name of ['__proto__', 'constructor', 'toString']) {
+    run([...specialSnapshot, '--out', specialFirst]);
+    await write(specialRoot, name, '首次内容');
+    assert.deepEqual(run(specialArgs, 1).tree_changes, { added: [name], deleted: [], changed: [] });
+    record(`idempotent:${name}:新增普通文件`);
+    run([...specialSnapshot, '--out', specialFirst]);
+    const entries = JSON.parse(await readFile(specialFirst)).entries;
+    assert(Object.hasOwn(entries, name)); assert.equal(entries[name].kind, 'file');
+    assert.equal(run(specialArgs).pass, true); record(`idempotent:${name}:普通文件不变`);
+    await write(specialRoot, name, '修改后的内容');
+    assert.deepEqual(run(specialArgs, 1).tree_changes, { added: [], deleted: [], changed: [name] });
+    record(`idempotent:${name}:修改普通文件`);
+    await rm(path.join(specialRoot, name));
+    assert.deepEqual(run(specialArgs, 1).tree_changes, { added: [], deleted: [name], changed: [] });
+    record(`idempotent:${name}:删除普通文件`);
+  }
+  for (const kind of ['directory', 'symlink']) {
+    run([...specialSnapshot, '--out', specialFirst]);
+    const target = path.join(specialRoot, '__proto__');
+    if (kind === 'directory') await mkdir(target);
+    else await symlink('missing-target', target);
+    assert.deepEqual(run(specialArgs, 1).tree_changes, { added: ['__proto__'], deleted: [], changed: [] });
+    record(`idempotent:__proto__:新增${kind}`);
+    run([...specialSnapshot, '--out', specialFirst]);
+    assert.equal(JSON.parse(await readFile(specialFirst)).entries['__proto__'].kind, kind);
+    assert.equal(run(specialArgs).pass, true); record(`idempotent:__proto__:${kind}不变`);
+    await rm(target, { recursive: kind === 'directory' });
+    assert.deepEqual(run(specialArgs, 1).tree_changes, { added: [], deleted: ['__proto__'], changed: [] });
+    record(`idempotent:__proto__:删除${kind}`);
+  }
   const one = cases['f1-single-app'], three = cases['f3-legacy-layers'], four = cases['f4-empty'];
   async function corrupt(item, file, mutate, id) {
     const full = path.join(item.root, file), original = await readFile(full);

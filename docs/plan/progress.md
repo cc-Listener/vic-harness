@@ -10,7 +10,7 @@
 | T01 | 插件骨架 | M1 | ✅ | 2026-10-14 | 六技能隔离安装与发现验收通过；独立审查待定 |
 | T02 | 合同 schema v2 | M1 | ✅ | 2026-10-14 | 标准 JSON Schema 小子集；58 个 v1 业务路径、163 个项目示例路径验收通过；独立审查待定 |
 | T03 | vic-check：解析与合同规则 | M1 | ✅ | 2026-10-14 | 六条规则与 CLI；Node 18/当前 Node 20 tests 通过，示例 0 error，1454 文件 97.09ms；独立审查待定 |
-| T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 四夹具与两基线断言器；Node 18/当前 Node 33 项确定性验收通过；独立审查待定 |
+| T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 四夹具与两基线断言器；R1 特殊文件名漏报已修；Node 18/当前 Node 51 项通过；修复复审待定 |
 | T05 | vic-bootstrap v2 | M1 | ⬜ | | |
 | T06 | vic-agents v2 | M1 | ⬜ | | |
 | T07 | vic-check：代理配置规则 | M1 | ⬜ | | |
@@ -199,3 +199,10 @@ T04_VERIFIED=33
 - 未完成 / 遗留：
 - 给下个会话的提示：
 ```
+
+### 2026-10-14 T04 独立审查 R1 修复
+- 做了什么：修复完整文件树快照遗漏根级 `__proto__` 的问题；写入使用无原型 entries，读取快照后亦移除 entries 原型。仅修改 `evals/assert.mjs`、`evals/verify-fixtures.mjs` 与本进度文件，未改 T03 或其他票。
+- 先复现：新增特殊文件名回归后运行 `rtk proxy node evals/verify-fixtures.mjs` → exit 1；新增 `__proto__` 时 checker 错误 exit 0、pass=true、tree_changes 全空。
+- 修复验证：`rtk proxy node evals/verify-fixtures.mjs`（v25.8.1）与 `rtk proxy <T03-node18.txt 的 NODE_PATH> evals/verify-fixtures.mjs`（v18.20.8）均 exit 0、`T04_VERIFIED=51`。两个 mjs 的 `node --check` 与 `rtk git diff --check` 均 exit 0。
+- 新增 18 项回归覆盖 `__proto__`、`constructor`、`toString` 普通文件新增/不变/内容修改/删除，以及 `__proto__` 空目录和断链新增/不变/删除；变化要求 exit 1 且 tree_changes 精确包含目标路径，不变要求 exit 0。原 33 项均复跑通过。
+- 交接：独立审查原结论需修改，仅 R1 必修；本次修复已确定性验证，待独立限定范围复审。仍未执行真实 skill/LLM；详细红绿输出见 ignored T04-report.md。

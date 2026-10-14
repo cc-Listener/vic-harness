@@ -143,7 +143,7 @@ function sectionBytes(bytes, wanted) {
 }
 
 async function snapshot(root, expected, expectedHash) {
-  const entries = {};
+  const entries = Object.create(null);
   async function walk(dir, prefix = '') {
     for (const name of (await readdir(dir)).sort()) {
       const file = prefix ? `${prefix}/${name}` : name;
@@ -167,6 +167,8 @@ async function snapshot(root, expected, expectedHash) {
 async function readSnapshot(file, expectedHash, expected) {
   const value = JSON.parse(await readFile(file, 'utf8'));
   if (!object(value) || value.version !== 1 || value.expected_sha256 !== expectedHash || !object(value.entries) || !object(value.sections)) fail(`快照格式或 expected.yaml 摘要不匹配：${file}`);
+  // JSON.parse 会还原普通对象；读取路径时也只允许字典自有属性。
+  Object.setPrototypeOf(value.entries, null);
   for (const [name, entry] of Object.entries(value.entries)) {
     relativePath(name);
     if (!object(entry) || !['file', 'directory', 'symlink'].includes(entry.kind) || (entry.kind !== 'symlink' && (!Number.isInteger(entry.mode) || entry.mode < 0 || entry.mode > 0o777)) || (entry.kind === 'file' && (!/^[a-f0-9]{64}$/.test(entry.sha256) || !Number.isInteger(entry.size) || entry.size < 0 || typeof entry.executable !== 'boolean')) || (entry.kind === 'symlink' && typeof entry.target !== 'string')) fail(`快照条目无效：${name}`);
