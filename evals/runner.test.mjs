@@ -8,6 +8,34 @@ import { parseEvents, totalUsage, csvRow } from './lib/events.mjs';
 import { execute } from './lib/process.mjs';
 import { tree, restore, hashes } from './lib/files.mjs';
 import { options, phasePrompt } from './run.mjs';
+import { publicationEntries, auditCommands } from './lib/isolation.mjs';
+
+test('发布bundle动态收集内部辅助与共享资源，原答案读取反例在真实资源视图失败', async () => {
+  const origin = await mkdtemp(path.join(os.tmpdir(), 'vic-origin-test-'));
+  const visible = await mkdtemp(path.join(os.tmpdir(), 'vic-visible-test-'));
+  try {
+    for (const folder of ['skills/example/scripts', 'schemas', 'scripts/vendor', 'evals/fixtures/f2/repo', 'evals/fixtures/other', 'evals/results', 'tests', 'docs/plan']) await mkdir(path.join(origin, folder), { recursive: true });
+    for (const [file, value] of Object.entries({ 'skills/example/SKILL.md': '真实技能', 'skills/example/scripts/new-helper.mjs': "import {value} from '../../../scripts/vendor/shared.mjs'; console.log(value)", 'scripts/vendor/shared.mjs': 'export const value = 42;', 'schemas/data.yaml': 'schema', 'evals/fixtures/f2/expected.yaml': '秘密答案', 'evals/fixtures/other/questions.yaml': '其他题目', 'evals/results/old.json': '历史', 'evals/metrics.csv': '统计', 'tests/internal.test.mjs': '测试', 'docs/plan/plan.md': '规划' })) await writeFile(path.join(origin, file), value);
+    const frozen = await tree(origin), publication = publicationEntries(frozen);
+    const bundle = path.join(visible, 'bundle'); await restore(publication, bundle);
+    assert.deepEqual(hashes(await tree(bundle)), hashes(publication));
+    assert.ok(Object.keys(publication).every((name) => /^(skills|scripts|schemas)(\/|$)/.test(name)));
+    const run = await execute(process.execPath, [path.join(bundle, 'skills/example/scripts/new-helper.mjs')]);
+    assert.equal(run.exit_code, 0); assert.equal(run.stdout.trim(), '42');
+    const leaked = await execute('cat', [path.join(origin, 'evals/fixtures/f2/expected.yaml')]);
+    assert.equal(leaked.stdout, '秘密答案');
+    const denied = await execute('cat', [path.join(bundle, 'evals/fixtures/f2/expected.yaml')]);
+    assert.notEqual(denied.exit_code, 0); assert.ok(!denied.stdout.includes('秘密答案'));
+    const prompt = phasePrompt({ skill: 'example', skillPath: path.join(bundle, 'skills/example/SKILL.md'), bundleRoot: bundle, phase: 'first', rtk: false });
+    const read = await execute('sh', ['-c', prompt.readCommand]); assert.equal(read.stdout, '真实技能');
+    const events = [{ type: 'item.completed', item: { id: 'read', type: 'command_execution', command: prompt.readCommand, exit_code: read.exit_code, aggregated_output: read.stdout } }, { type: 'turn.completed' }].map(JSON.stringify).join('\n');
+    assert.deepEqual(parseEvents(events, '真实技能', prompt.readCommand).errors, []);
+    assert.ok(parseEvents(events.replaceAll(bundle, origin), '真实技能', prompt.readCommand).errors.includes('skill_read_unverified'));
+    await writeFile(path.join(bundle, 'schemas/data.yaml'), '改动');
+    assert.notDeepEqual(hashes(await tree(bundle)), hashes(publication));
+    assert.equal(auditCommands([{ id: 'oracle', command: `cat '${origin}/evals/fixtures/f2/expected.yaml'` }], { oracleRoot: origin, sourceRoot: origin }).flagged.length, 1);
+  } finally { await rm(origin, { recursive: true, force: true }); await rm(visible, { recursive: true, force: true }); }
+});
 
 test('参数拒绝穿越、未知参数和未实现 L3', () => {
   assert.equal(options([]).model, 'gpt-6.1-sol');
@@ -187,10 +215,32 @@ if(process.argv.includes('app-server')){
     for (const r of records) {
       assert.equal(r.pass, false); assert.equal(r.execution_completed, false);
       assert.ok(r.failures.includes('first:model_event_failure')); assert.equal(r.usage.tokens, null);
+      assert.equal(r.workspace.retained, true); assert.equal(r.oracle.retained, true);
+      assert.notEqual(path.dirname(r.oracle.path), path.dirname(r.publication.path));
+      assert.ok(r.publication.integrity.every((entry) => entry.intact));
+      const artifacts = path.join(temp, r.artifacts);
+      const prompt = await readFile(path.join(artifacts, 'first.prompt.txt'), 'utf8');
+      assert.ok(prompt.includes(path.join(r.publication.path, 'skills/vic-bootstrap/SKILL.md')));
+      assert.ok(!prompt.includes(r.oracle.path));
+      assert.ok(!prompt.includes(path.join(temp, 'skills')));
+      assert.deepEqual(hashes(await tree(r.publication.path)), r.publication.binding);
+      assert.ok(Object.keys(r.publication.binding).every((name) => /^(skills|schemas|scripts)(\/|$)/.test(name)));
+      await assert.rejects(readFile(path.join(r.publication.path, 'evals/fixtures/f1-single-app/expected.yaml')));
+      workspaces.push(path.dirname(r.oracle.path));
     }
     const csv = await readFile(path.join(temp, 'evals/metrics.csv'), 'utf8');
     const lines = csv.trimEnd().split('\n'); assert.equal(lines.length, 3);
     for (const line of lines.slice(1)) assert.equal(line.split(',')[8], '', '失败 CSV 不伪造 tokens');
+    const mock = await readFile(path.join(bin, 'codex'), 'utf8');
+    for (const changed of ['bundle', 'source']) {
+      const modification = changed === 'bundle' ? "const p=input.match(/cat '([^']+)'/)[1];require('node:fs').appendFileSync(p,'changed');" : `require('node:fs').appendFileSync(${JSON.stringify(path.join(temp, 'skills/vic-bootstrap/SKILL.md'))},'changed');`;
+      await writeFile(path.join(bin, 'codex'), mock.replace("}else{console.log", `}else{let input='';process.stdin.on('data',d=>input+=d);process.stdin.on('end',()=>{${modification}console.log`).replace("process.exitCode=1;}\n", "process.exitCode=1;});}\n"));
+      const changedRun = await execute('/usr/bin/env', [...args, '--fixture', 'f1']);
+      assert.equal(changedRun.exit_code, 1);
+      const all = await collect(), last = all.find((r) => r.failures.includes(changed === 'bundle' ? 'publication_changed' : 'source_changed_during_run'));
+      assert.ok(last, `${changed}变动真实检出`); assert.equal(last.workspace.retained, true);
+      workspaces.push(...all.map((r) => path.dirname(r.oracle.path)));
+    }
     console.log(JSON.stringify({ alias_help: help.exit_code, no_model: missing.exit_code, mock_repeat2: failed.exit_code, unique_results: records.length, csv_rows: 2 }));
   } finally {
     for (const folder of workspaces) await rm(folder, { recursive: true, force: true });

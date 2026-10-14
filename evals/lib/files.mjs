@@ -30,7 +30,7 @@ export async function restore(entries, root) {
   for (const [name, entry] of Object.entries(entries)) {
     const dest = path.join(root, name);
     if (entry.kind === 'directory') { await mkdir(dest, { recursive: true }); await chmod(dest, entry.mode); }
-    else if (entry.kind === 'file') { await mkdir(path.dirname(dest), { recursive: true }); await writeFile(dest, Buffer.from(entry.base64, 'base64'), { flag: 'wx', mode: entry.mode }); }
+    else if (entry.kind === 'file') { await mkdir(path.dirname(dest), { recursive: true }); await writeFile(dest, Buffer.from(entry.base64, 'base64'), { flag: 'wx', mode: entry.mode }); await chmod(dest, entry.mode); }
     else throw new Error('unsupported_tree_entry');
   }
 }

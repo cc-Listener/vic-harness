@@ -610,3 +610,10 @@ Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
 - fresh 实现上下文仅修改 f2 expected 与既有 verify-fixtures：使用既有 contains_any 深度精确比较，接受 main→bootstrap→router 和 HTML→main→bootstrap→router 两条完整数组。HTML 模块脚本的连接有 fixture 源码依据，不增加前缀、子序列或路径归一化规则。
 - 新增两条合法链及十条错误链回归；缺核心项、乱序、无依据前后缀/中间路径、重复项均拒绝，其余断言必须仍通过。实现者实际运行当前 Node25.8.1 与 Node18.20.8 的 evals/verify-fixtures.mjs，均 exit0、T04_VERIFIED=102（原90项保持）。协调检查两文件差异与 diff --check 通过，产品和回归共35增/1删。
 - 报告 ignored T04-M1-fix-report.md；未运行模型、未修改其他 fixtures/断言器/旧 expected 或 raw。旧 f2 r1 仍失败，新表示只用于未来冻结系列。T04 保持🟡，等待三票修复后的统一独立复验，不以确定性测试替代发布验收。
+
+### 2026-10-14 T09 M1 发布资源与验收材料隔离修复（待统一独审）
+
+- fresh 实现上下文只改 run.mjs、lib/files.mjs、runner.test.mjs 并新增 lib/isolation.mjs。模型提示及首命令验证改绑独立 bundle，动态收集完整 skills/schemas/scripts，包含技能内部辅助与共享 vendor；不向 bundle 放入 evals、测试、历史结果或规划。fixture/expected/可信 checker/assertion 恢复到另一次 mkdtemp 的 oracle，不与模型已知运行根相邻。
+- 新增发布清单/树/hash、oracle binding、逐阶段完整性和显式路径事件审计。bundle/oracle/live 来源变动或显式验收材料读取均失败并保留证据；可信 oracle 变动时不执行其中工具。恢复文件显式 chmod 保持冻结 mode；原组清理、路径别名、配置白名单、流 error 严格失败、用量和 CSV 行为保留。此为资源和路径隔离，不能证明任意宿主读取或动态 shell 路径被操作系统阻断。
+- 实现者最终实际执行两套 evals/runner.test.mjs：当前 Node25.8.1 与 Node18.20.8 各11/11通过、无跳过；diff --check exit0。反例证明完整 source 的 expected 可读而真实 bundle 对应路径不存在，嵌套辅助的相对 vendor 导入成功；真实 run.sh/mock 检出 bundle/source 篡改并落盘，严格 turn.failed 仍失败。协调已核对报告与四文件差异范围。
+- ignored T09-M1-fix-report.md 保存细节；没有真实模型调用、旧结果重算或敏感配置落盘。T09 保持🟡，等待统一独审及最终新源全量验证；未把 mock/确定性测试当作新固定系列通过。

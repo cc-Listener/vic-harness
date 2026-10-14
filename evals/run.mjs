@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFile, writeFile, mkdir, mkdtemp, readdir, realpath, rm, appendFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, mkdtemp, readdir, realpath, rm, appendFile, lstat } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { randomUUID } from 'node:crypto';
@@ -9,6 +9,7 @@ import { load, JSON_SCHEMA } from '../scripts/vendor/js-yaml.mjs';
 import { execute } from './lib/process.mjs';
 import { prepareConfig } from './lib/config.mjs';
 import { parseEvents, totalUsage, CSV_HEADER, csvRow } from './lib/events.mjs';
+import { publicationEntries, auditCommands } from './lib/isolation.mjs';
 import { tree, restore, hashes, sha256, jsonFile, quote } from './lib/files.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -29,17 +30,19 @@ export function options(argv) {
   return result;
 }
 
-export function phasePrompt({ skill, skillPath, phase, rtk }) {
+export function phasePrompt({ skill, skillPath, phase, rtk, bundleRoot = path.dirname(path.dirname(path.dirname(skillPath))) }) {
   const readCommand = `${rtk ? 'rtk proxy ' : ''}cat ${quote(skillPath)}`;
   const guidance = rtk ? '用户要求实际 shell 命令以 rtk 前缀执行。' : '实际 shell 命令遵守目标仓库和用户适用 guidance 的命令代理要求；没有代理要求时使用标准工具。';
-  const prompt = `用户现在明确调用 $${skill}，在当前目标仓库执行该技能的完整工作流。${phase === 'second' ? '这是同一仓库第二次调用，请按技能真实判定模式。' : ''}\n第一个工具调用必须执行 ${readCommand}，完整读取实际 SKILL.md，再按其实际路径读取 references 及共享资源；只遵循本次指定 vic 技能。所有对话和人读输出用简体中文；${guidance}技能及插件源只读，产物只写当前目标仓库。不启动其他代理。不读取认证或宿主配置。不要安装依赖或探测联网包管理器。\n`;
+  const prompt = `用户现在明确调用 $${skill}，在当前目标仓库执行该技能的完整工作流。${phase === 'second' ? '这是同一仓库第二次调用，请按技能真实判定模式。' : ''}\n第一个工具调用必须执行 ${readCommand}，完整读取实际 SKILL.md，再按其实际路径读取 references 及共享资源；只遵循本次指定 vic 技能。所有对话和人读输出用简体中文；${guidance}读取范围仅为当前目标仓库与独立发布资源目录 ${bundleRoot}；发布资源只读，产物只写当前目标仓库。评测oracle由外部runner持有，不属于技能读取范围。不启动其他代理。不读取认证或宿主配置。不要安装依赖或探测联网包管理器。\n`;
   return { prompt, readCommand };
 }
 
 async function freeze(fixture, skill) {
   const entries = {};
-  for (const folder of [`skills/${skill}`, 'schemas', 'scripts', `evals/fixtures/${fixture}`]) {
-    entries[folder] = { kind: 'directory', mode: 0o755 };
+  for (const folder of ['skills', 'schemas', 'scripts', `evals/fixtures/${fixture}`]) {
+    const info = await lstat(path.join(ROOT, folder));
+    if (!info.isDirectory()) throw new Error('unsupported_tree_entry');
+    entries[folder] = { kind: 'directory', mode: info.mode & 0o777 };
     for (const [name, entry] of Object.entries(await tree(path.join(ROOT, folder)))) entries[`${folder}/${name}`] = entry;
   }
   for (const file of ['evals/assert.mjs', 'evals/run.mjs', 'evals/run.sh', '.codex-plugin/plugin.json']) {
@@ -63,7 +66,13 @@ async function runOne(opts, fixture, sequence, frozen) {
   await mkdir(artifacts); // 原子独占创建，永不覆盖已有运行。
   const result = { run_id, date, plugin_version: version, fixture, skill: opts.skill, repeat: sequence, layer: 2, loading_mode: 'source-path', loading_note: '显式读取并遵循当前技能源；未验证原生插件 loader。正常用户配置仍可能带入用户指令。', command_guidance: opts.rtk ? 'user-requested-rtk' : 'applicable-guidance-or-standard-tools', requested_model: opts.model, requested_effort: opts.effort, actual_model: null, actual_effort: null, config: null, binding: hashes(frozen), phases: [], failures: [], pass: false, check_errors: null, usage: null, artifacts: path.relative(ROOT, artifacts), command_side_effect_audit: '未自动审计；完整命令事件保留，不能据最终树断言无中途副作用。' };
   const temp = await mkdtemp(path.join(os.tmpdir(), 'vic-eval-'));
-  const repo = path.join(temp, 'repo'), source = path.join(temp, 'frozen');
+  const repo = path.join(temp, 'repo'), bundle = path.join(temp, 'bundle');
+  const oracleTemp = await mkdtemp(path.join(os.tmpdir(), 'vic-oracle-'));
+  const source = path.join(oracleTemp, 'trusted');
+  const publication = publicationEntries(frozen);
+  result.publication = { path: bundle, binding: hashes(publication), copy_policy: '文件与目录恢复后显式chmod为冻结来源mode；不修改旧证据。只读由提示约束，非操作系统强制', integrity: [], isolation: '路径与资源视图分离；任意宿主读取防护未知，未实现操作系统强隔离' };
+  result.oracle = { path: source, retained: true };
+  result.access_scope = { read: [repo, bundle], write: [repo], audit: '保留所有command事件；标记显式评测路径，无法完整推断动态shell读取或宿主副作用' };
   result.workspace = { path: repo, retained: true, cleanup: '本次现场在插件工作区之外；成功时清理，失败保留供复查。' };
   let interruption = false, expectedCount = null;
   const onInterrupt = () => { interruption = true; };
@@ -71,6 +80,19 @@ async function runOne(opts, fixture, sequence, frozen) {
   try {
     await jsonFile(path.join(artifacts, 'binding-source.tree.json'), frozen);
     await restore(frozen, source);
+    const trustedBinding = hashes(await tree(source));
+    result.oracle.binding = trustedBinding;
+    result.oracle.integrity = [{ stage: 'before', intact: true }];
+    await jsonFile(path.join(artifacts, 'oracle.binding.json'), trustedBinding);
+    await restore(publication, bundle);
+    await jsonFile(path.join(artifacts, 'publication.tree.json'), publication);
+    async function verifyBundle(stage) {
+      const actual = hashes(await tree(bundle));
+      const intact = isDeepStrictEqual(actual, result.publication.binding);
+      result.publication.integrity.push({ stage, intact, binding: actual });
+      if (!intact) throw new Error('publication_changed');
+    }
+    await verifyBundle('before');
     const inputTree = await tree(path.join(source, 'evals/fixtures', fixture, 'repo'));
     await restore(inputTree, repo);
     await jsonFile(path.join(artifacts, 'input.tree.json'), inputTree);
@@ -96,23 +118,29 @@ async function runOne(opts, fixture, sequence, frozen) {
     result.config = config.projection;
     // 系列条件包含真实 provider 与全部冻结来源，不能混入旧系列。
     result.series_id = sha256(JSON.stringify({ binding: result.binding, config: result.config, loading_mode: result.loading_mode, command_guidance: result.command_guidance }));
-    const skillPath = await realpath(path.join(ROOT, 'skills', opts.skill, 'SKILL.md'));
+    const skillPath = await realpath(path.join(bundle, 'skills', opts.skill, 'SKILL.md'));
     const skillText = Buffer.from(frozen[`skills/${opts.skill}/SKILL.md`].base64, 'base64').toString('utf8');
     for (const phase of expectation.idempotent ? ['first', 'second'] : ['first']) {
       if (phase === 'second') await snapshot(first);
       if (interruption) throw new Error('runner_interrupted');
-      const { prompt, readCommand } = phasePrompt({ skill: opts.skill, skillPath, phase, rtk: opts.rtk });
+      const { prompt, readCommand } = phasePrompt({ skill: opts.skill, skillPath, phase, rtk: opts.rtk, bundleRoot: bundle });
       await writeFile(path.join(artifacts, `${phase}.prompt.txt`), prompt, { flag: 'wx' });
       const args = ['--disable', 'plugins', '--disable', 'hooks', '-a', 'never', ...config.overrides, 'exec', '--json', '--ephemeral', '--model', opts.model, '-s', 'workspace-write', '-C', repo, '-o', path.join(artifacts, `${phase}.last-message.txt`), '-'];
       // args 含仅内存 MCP 标识，不保存完整命令参数。
       const execution = await execute('codex', args, { cwd: repo, input: prompt, timeout: opts.timeout * 1000, stdoutFile: path.join(artifacts, `${phase}.events.jsonl`), stderrFile: path.join(artifacts, `${phase}.stderr.txt`) });
       const events = parseEvents(await readFile(path.join(artifacts, `${phase}.events.jsonl`), 'utf8'), skillText, readCommand);
-      const record = { phase, ...execution, ...events }; delete record.stdout; delete record.stderr;
+      const accessAudit = auditCommands(events.commands, { oracleRoot: source, sourceRoot: ROOT });
+      const record = { phase, ...execution, ...events, access_audit: accessAudit }; delete record.stdout; delete record.stderr;
       result.phases.push(record);
+      if (accessAudit.flagged.length) result.failures.push(`${phase}:evaluation_material_access`);
+      try { await verifyBundle(phase); } catch { result.failures.push('publication_changed'); }
       if (execution.exit_code !== 0 || execution.spawn_error || execution.timed_out || execution.interrupted) result.failures.push(`${phase}:execution_failed`);
       result.failures.push(...events.errors.map((error) => `${phase}:${error}`));
       if (execution.interrupted) interruption = true;
       await jsonFile(path.join(artifacts, `${phase}.tree.json`), await tree(repo, { allowLinks: true }));
+      const trustedIntact = isDeepStrictEqual(hashes(await tree(source)), trustedBinding);
+      result.oracle.integrity.push({ stage: phase, intact: trustedIntact });
+      if (!trustedIntact) { result.failures.push('oracle_changed'); break; }
       if (!isDeepStrictEqual(hashes(await freeze(fixture, opts.skill)), result.binding)) result.failures.push('source_changed_during_run');
       const check = await execute(process.execPath, [path.join(source, 'scripts/vic-check.mjs'), '--all', '--json', '--root', repo], { cwd: repo });
       await jsonFile(path.join(artifacts, `${phase}.check.json`), check);
@@ -127,14 +155,14 @@ async function runOne(opts, fixture, sequence, frozen) {
       let value; try { value = JSON.parse(asserted.stdout); } catch {}
       record.assertion = value ?? null;
       if (asserted.exit_code !== 0 || value?.pass !== true || (phase === 'second' && value?.summary?.pending !== 0)) result.failures.push(`${phase}:assertion_failed`);
-      if (events.errors.length || execution.exit_code !== 0 || interruption || result.failures.includes('source_changed_during_run')) break;
+      if (result.failures.includes('publication_changed') || accessAudit.flagged.length || events.errors.length || execution.exit_code !== 0 || interruption || result.failures.includes('source_changed_during_run')) break;
     }
     result.execution_completed = result.phases.length === (expectation.idempotent ? 2 : 1) && result.phases.every((p) => p.exit_code === 0 && !p.errors.length && !p.timed_out && !p.interrupted);
     result.l2_pass = result.phases.every((p) => p.assertion?.pass === true && p.check_errors === 0) && result.phases.at(-1)?.assertion?.summary?.pending === 0 && result.execution_completed;
     result.pass = result.execution_completed && result.l2_pass && !result.failures.length;
   } catch (error) {
     // 配置响应错误及内部路径不写入 failure message，防止敏感字段泄漏。
-    const known = /^(config_|unsupported_|baseline_|runner_interrupted$|source_changed_before_run$)/.test(error.message) ? error.message : 'runner_internal_failure';
+    const known = /^(config_|unsupported_|baseline_|runner_interrupted$|source_changed_before_run$|publication_changed$)/.test(error.message) ? error.message : 'runner_internal_failure';
     result.failures.push(known); result.execution_completed = false; result.l2_pass = false;
   } finally {
     result.usage = totalUsage(result.phases, expectedCount);
@@ -145,7 +173,7 @@ async function runOne(opts, fixture, sequence, frozen) {
     result.check_errors = result.phases.length && result.phases.every((p) => Number.isInteger(p.check_errors)) ? Math.max(...result.phases.map((p) => p.check_errors)) : null;
     result.seconds = (Date.now() - started) / 1000;
     if (result.pass) {
-      try { await rm(temp, { recursive: true, force: true }); result.workspace.retained = false; }
+      try { await rm(temp, { recursive: true, force: true }); await rm(oracleTemp, { recursive: true, force: true }); result.workspace.retained = false; result.oracle.retained = false; }
       catch { result.failures.push('cleanup_failed'); result.pass = false; }
     }
     process.off('SIGINT', onInterrupt); process.off('SIGTERM', onInterrupt);
