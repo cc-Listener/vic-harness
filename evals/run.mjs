@@ -177,6 +177,6 @@ export async function main(argv) {
   return passed ? 0 : 1;
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && (await realpath(process.argv[1])) === fileURLToPath(import.meta.url)) {
   main(process.argv.slice(2)).then((code) => { process.exitCode = code; }).catch((error) => { console.error(error.message); process.exitCode = 2; });
 }

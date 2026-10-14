@@ -15,7 +15,7 @@
 | T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 静态迁移与两次限定修复均独立通过；真实试用主动no-op/完整摘要已验证，仍有3项已披露输出缺陷移交T12，完整行为未通过 |
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
 | T08 | vic-router 与 vic-check skill 文本 | M1 | ✅ | 2026-10-14 | 11场景及fallback完整；独立27测试/CLI探针通过，RTK依赖R1修复与Node-only限定复审通过 |
-| T09 | 评测运行器 | M1 | 🟡 | | 实现及真实f1旧绑定两轮通过；最终源码兼容/失败边界修正已确定性验证，待完整独立验收 |
+| T09 | 评测运行器 | M1 | 🟡 | | 旧绑定真实f1两轮通过；完整独审R1/R2已限定修复，两Node回归通过，待限定复审 |
 | — | 🚩 发布 v0.1.0 | M1 | ⬜ | | |
 | T10 | 来源字段与过期检测 | M2 | ⬜ | | |
 | T11 | refresh-log | M2 | ⬜ | | |
@@ -550,3 +550,22 @@ STANDARD_NODE_EXAMPLE=true; ABSOLUTE_USER_PATH=false; READ_ONLY_BOUNDARY_PRESERV
 - 最终四文件run.mjs/config.mjs/events.mjs/files.mjs相对真实绑定有差异：提示RTK可选化、首命令完整读取/非法事件边界、缺规定轮次用量与known_usage、provider一致性及运行前来源复核、中断/清理/metrics错误保留、全轮L2与checker汇总、特殊树条目只归档及Git fsmonitor关闭。技能、fixture、expected、checker/assertion未改；最终源码未真实执行模型。最终解析器对旧原始两轮事件复核errors=[]、读取/用量一致，单列final-runner-verification.json，不冒充新系列。
 - 最终确定性验证：当前Node和官方Node18.20.8各8/8运行器机制测试通过；无RTK PATH下标准cat真实执行exit0，RTK提示只随可选标志；真实assert接口捕获二轮隐藏文件、删除和空目录变化。`rtk proxy node --test tests/*.test.mjs evals/runner.test.mjs` 48/48通过；`rtk git diff --check` exit0。
 - ignored报告T09-report.md及唯一结果附件完整保留。规定f1 L2与执行完成分层通过；固定保护断言通过，命令级审阅未见安装/联网包管理器或禁读代理配置，但未独立监测网络/系统副作用，不宣称无外部副作用已验证。仅一次repeat，不计最终M1三次系列，不替代f2–f4、附加语义或native loader验收。T09保持🟡待完整独立票审；本次不push、不发布。
+
+
+### 2026-10-14 T09 R1/R2 限定修复（待限定复审）
+
+- 仅修独立票审两项：`evals/lib/process.mjs` 将终止宽限期作为可等待的 Promise，直接子进程 close 不取消组级 SIGKILL；timeout、SIGINT、SIGTERM 均等待该流程后返回。`evals/run.mjs` 对 argv 入口使用 realpath，与 import.meta.url 的规范路径比较；保留 import 不自动执行。
+- 新增必要运行器回归：stdio ignore、忽略 SIGTERM 的同组孙进程，三种触发返回后确认后代不存在；系统既有目录别名下实际执行 run.sh help、无模型失败 CLI、test-only mock config/read + turn.failed 的 repeat2。普通目录复制、没有创建软链；模拟失败只验证机制，不计真实模型评测。现场均清理，旧真实附件未改写。
+- 从 `a577c3429bf54211f46f4396dbcd4131103ca6ce` 工作区外 archive 叠新回归：当前Node与Node18均2项失败，原版timeout约0.61秒返回、别名help stdout为空。另以原process复现：两Node在返回2300ms后孙进程仍存活，探针已SIGKILL清理。
+- 实际命令：`rtk proxy node --test evals/runner.test.mjs` 当前Node10/10；`rtk proxy python3` 读取T03已核验NODE_PATH并参数数组执行Node18相同测试10/10。`rtk proxy node --test tests/*.test.mjs evals/runner.test.mjs` 当前Node50/50；`rtk git diff --check` exit0。
+
+```text
+{"alias_help":0,"no_model":1,"mock_repeat2":1,"unique_results":2,"csv_rows":2}
+ℹ tests 50
+ℹ pass 50
+ℹ fail 0
+Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
+```
+
+- 核对旧真实binding：run.sh相同；run/config/events/files原有差异仍保留，本修复后process也不同。技能、fixture、expected、checker/assertion未动。修复后源码没有新真实模型执行，旧真实两轮结果仅证明旧binding执行；限定确定性回归不替代M1规定系列、native loader或副作用审计。
+- ignored `T09-fix-report.md`、`T09-fix-binding.json`、`T09-fix-before.txt`、`T09-fix-old-grandchild.txt`、`T09-fix-node18.txt`记录原输出和哈希。T09仍🟡待限定复审；无新依赖、绝对用户路径、规划/ADR/reference变更、push或发布。
