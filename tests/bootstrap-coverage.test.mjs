@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, mkdir, writeFile, rm, realpath, symlink } from 'node:fs/promises';
+import { mkdtemp, readFile, mkdir, writeFile, rm, realpath, symlink, readdir, lstat, readlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -23,6 +23,80 @@ async function replay(t, round) {
   return { root, tree, sources:Object.keys(tree).filter(p => /\.[jt]sx?$/.test(p) && !p.startsWith('.')) };
 }
 async function yaml(root,path,change) { const value = load(await readFile(join(root,path),'utf8')); change(value); await writeFile(join(root,path),dump(value)); }
+
+test('标准根缺基线仅返回未比较反馈；协议优先且整树只读',async t => {
+  const script = fileURLToPath(new URL('../skills/vic-bootstrap/scripts/coverage.mjs',import.meta.url));
+  for (const directory of [false,true]) {
+    const root = await mkdtemp(join(tmpdir(),'coverage-missing-'));
+    t.after(() => rm(root,{recursive:true,force:true}));
+    if (directory) await mkdir(join(root,'contracts'));
+    await writeFile(join(root,'canonical.yaml'),'schema_version: 2\n');
+    const before = await snapshot(root);
+    const input = {sources:['../unread'],facts:[{kind:'unknown',owner:'unregistered'}]};
+    const result = await checkCoverage(root,input);
+    assert.equal(result.status,'incomplete'); assert.equal(result.reason,'baseline_missing');
+    assert.equal(result.baseline,'contracts/project-context.yaml');
+    assert.deepEqual(result.findings,[]); assert.deepEqual(result.checked,[]); assert.equal(result.scope,null);
+    assert.match(result.limitations.join(' '),/未建立 owner/);
+    assert.match(result.limitations.join(' '),/未读取 sources/);
+    assert.match(result.limitations.join(' '),/未核验事实项/);
+    assert.match(result.limitations.join(' '),/未比较机器投影/);
+    const cli = spawnSync(process.execPath,[script,root],{input:JSON.stringify(input),encoding:'utf8'});
+    assert.equal(cli.status,1); assert.equal(cli.stderr,''); assert.deepEqual(JSON.parse(cli.stdout),result);
+    const invalid = await checkCoverage(root,{sources:[]});
+    assert.ok(invalid.error); assert.equal(invalid.reason,undefined);
+    const invalidCli = spawnSync(process.execPath,[script,root],{input:'{"sources":[]}',encoding:'utf8'});
+    assert.equal(invalidCli.status,1); assert.deepEqual(JSON.parse(invalidCli.stdout),invalid);
+    assert.deepEqual(await snapshot(root),before);
+  }
+});
+
+test('已有根的缺子合同、非法 YAML、未知 schema、未注册 owner 和软链不误归缺基线',async t => {
+  const root = await mkdtemp(join(tmpdir(),'coverage-boundaries-'));
+  t.after(() => rm(root,{recursive:true,force:true}));
+  const contracts = join(root,'contracts'), file = join(contracts,'project-context.yaml');
+  await mkdir(contracts);
+  const valid = {schema_version:2};
+  const input = {sources:[],facts:[]};
+  const script = fileURLToPath(new URL('../skills/vic-bootstrap/scripts/coverage.mjs',import.meta.url));
+  async function boundaryTree(path = root) {
+    const stat = await lstat(path);
+    if (stat.isSymbolicLink()) return {mode:stat.mode,link:await readlink(path)};
+    if (stat.isFile()) return {mode:stat.mode,bytes:(await readFile(path)).toString('base64')};
+    return {mode:stat.mode,entries:await Promise.all((await readdir(path)).sort().map(async name => [name,await boundaryTree(join(path,name))]))};
+  }
+  async function rejectUnchanged(value, expected) {
+    const before = await boundaryTree();
+    await assert.rejects(checkCoverage(root,value),expected);
+    const cli = spawnSync(process.execPath,[script,root],{input:JSON.stringify(value),encoding:'utf8'});
+    assert.equal(cli.status,1); assert.equal(cli.stderr,'');
+    const result = JSON.parse(cli.stdout);
+    assert.equal(result.status,'incomplete'); assert.ok(result.error); assert.equal(result.reason,undefined);
+    assert.deepEqual(await boundaryTree(),before);
+  }
+  await writeFile(file,dump(valid));
+  assert.equal((await checkCoverage(root,input)).status,'covered-within-scope');
+  await rejectUnchanged({sources:[],facts:[{kind:'LI',owner:'other.yaml',evidence:['a'],values:{source:'a'}}]},/owner 未注册/);
+  await writeFile(file,dump({...valid,apps:[{path:'app',contract:'contracts/child.yaml',docs:'docs/app'}]}));
+  await rejectUnchanged(input,{code:'ENOENT'});
+  await writeFile(file,'schema_version: [');
+  await rejectUnchanged(input,/unexpected end/);
+  await writeFile(file,dump({...valid,custom:true}));
+  assert.equal((await checkCoverage(root,input)).status,'restricted');
+  await writeFile(file,dump({...valid,apps:[{path:'app',contract:'contracts/child.yaml',docs:'docs/app'}]}));
+  await writeFile(join(contracts,'child.yaml'),dump({...valid,custom:true}));
+  const unknownBefore = await boundaryTree();
+  const unknown = await checkCoverage(root,input);
+  assert.equal(unknown.status,'restricted'); assert.equal(unknown.reason,undefined);
+  const unknownCli = spawnSync(process.execPath,[script,root],{input:JSON.stringify(input),encoding:'utf8'});
+  assert.equal(unknownCli.status,1); assert.deepEqual(JSON.parse(unknownCli.stdout),unknown);
+  assert.deepEqual(await boundaryTree(),unknownBefore);
+  await rm(file); await symlink('missing.yaml',file);
+  await rejectUnchanged(input,/软链/);
+  await rm(contracts,{recursive:true}); await mkdir(join(root,'actual'));
+  await symlink('actual',contracts);
+  await rejectUnchanged(input,/软链/);
+});
 
 test('保留真实 r2 首轮：明确机械缺口与已读风险候选；二轮补齐产物没有这些反馈',async t => {
   const first = await replay(t,'first'), second = await replay(t,'second');

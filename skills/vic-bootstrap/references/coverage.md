@@ -18,4 +18,6 @@ JSON
 
 调用协议要求 API 与 CLI 都显式提交 `sources`、`facts` 两个数组；无 stdin、缺键或非数组返回 `incomplete`、非成功退出，不能作为覆盖完成。低信息场景显式 `[]` 合法，但高信息场景也不能以空集合省略已经核实的观察。
 
+协议校验后，标准根 `contracts/project-context.yaml` 真实缺失（包括正常父目录缺失）返回 `status: incomplete`、`reason: baseline_missing`、`baseline` 标准根路径、空 findings/checked 与 `scope: null`，CLI 仍 exit1。此时未建立 owner、未读取 sources/事实 evidence、未核验事实项、未比较机器投影；零 findings 不是通过。可能仍有非标准 canonical 根，须结合入口与所有权调查决定模式和写权限，不自动判 bootstrap。缺注册子合同、未注册 owner、非法 YAML、权限或软链错误保持原非成功边界，不能归为缺基线；未知根/子 schema 仍 restricted。摘要仅陈述实际 scope，未核验范围不可称匹配。
+
 正常反馈的 `scope` 记录 sources 的 submitted/scanned 路径、每个 owner 的 GP/VG/PA/LI 显式事实投影计数、automaticVG 实际核对命令数量，以及 paDuplicateChecks 子层 PA 与根定义的重复核对数量（根层 count 为零，rootDefinitions 是比较基准数量）。零计数表示该类显式投影未执行，不能推导该类不存在；只提交一条 LI 就仅证明该条投影匹配。摘要仅按实际范围表述，不以各类有数量或零 findings 推导完整调查。事实语义分类、未提交观察集合、组件文档语义始终未验证，仍须双向人工核对。

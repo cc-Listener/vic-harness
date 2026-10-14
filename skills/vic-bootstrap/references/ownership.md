@@ -34,23 +34,12 @@
 重复导航的 legacy 文件只列入报告和 `$vic-agents` 的迁移建议，不改写。任何“受影响文件”清单只能包含实际有权且确实改动的文件。
 M1 不新写 `integrations/foreign_sections` 或 refresh-log；所有权保护本身立即执行，不等待 M2 的结构化检测。
 
-## 生成器直接经 stdin 执行
+## 直接提交最终文本
 
-在目标仓库根执行；先确认本次 `bootstrap/refresh` 确实需要改动的产物路径、目录及所有权，并在上下文列明允许写入的产物。下面仅演示已获写权限且父目录已存在的 `docs/project-map.md` 和 `contracts/project-context.yaml`；内容须替换为本轮已核实集合的增量结果，保留外部段落和有效旧字段，不能照抄示例覆盖已有合同。`no-op` 不执行写入。
+优先使用宿主已有文件编辑/补丁工具，直接提交本轮已核实的最终内容或定向 diff，不要求把 Markdown/YAML 手写为 JavaScript 字符串。先确认实际授权路径、目录和需改范围；已有文件完整读回，只改实际缺口，保留外部段原始字节、有效字段、合法原文、CRLF、无末尾换行及 mode。写后读回并逐字节核对保护范围；工具不能精确保留或安全合并时如实报告未完成，不能用整文件覆盖绕过。`no-op` 不调用写工具，不新增 writer、scratch 或可执行生成器文件。
 
-```sh
-node --input-type=module - <<'VIC_GENERATOR'
-import { writeFile } from 'node:fs/promises';
+工具传输仍须正确编码，YAML 引用与文档 shell 命令语法仍须核对；文档命令和 YAML 解析后命令分别与同一已核实值对照。正确的正则反斜杠、检索/外部示例不全局删除，不能用零 diff 掩盖事实错误。
 
-const artifacts = new Map([
-  ['docs/project-map.md', '# 项目地图\n\n本轮已核实的项目结构。\n'],
-  ['contracts/project-context.yaml', 'version: 1\n'],
-]);
-for (const [path, content] of artifacts) {
-  await writeFile(path, content, 'utf8');
-}
-console.log(JSON.stringify({ written: [...artifacts.keys()] }));
-VIC_GENERATOR
-```
+编辑工具的保留能力须按实际边界确认，不能从 LF 文本/mode 保持推导无末尾换行也保真；若补丁会追加末尾换行而原文要求精确保留，该工具不可直接用于该项修改，应保留原文件并报告未完成。
 
-带单引号的 heredoc 分隔符使 shell 不展开代码中的变量或命令替换；生成器代码直接进入 Node stdin，不创建生成器文件，也不新增 scratch 或状态文件。实际命令遵守目标 guidance 的代理约定。这里的 stdin 是 JavaScript 代码；coverage helper 接收 JSON 是另一次独立调用，不能共用或拼接同一 stdin。
+带单引号的 heredoc 仅防 shell 展开；`node --input-type=module -` 的 stdin 仍是 JavaScript 程序，`String.raw` 仍受反引号边界约束，任意 stdin 不自动保真。coverage 的 stdin 是 JSON 数据，与文本编辑或程序 stdin 区分。

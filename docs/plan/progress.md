@@ -53,6 +53,7 @@
 | 2026-10-14 | T05 真实评测 / T04 独立审查 | f2 的同一根脚本命令两种合法写法，以及 f3 唯一 Python 源文件作为模块的准确描述，被固定表示断言误拒绝。 | 增加 `contains_any` 显式精确候选；f2 只允许 `pnpm lint`/`pnpm run lint`，f3 只允许 `src`/`src/main.py`，不做命令归一化或前缀匹配。 | 独立审查确认规范未限定唯一表示；修复须保留错误脚本、参数及路径反例。旧记录不变，新断言重判另存版本与来源。 |
 | 2026-10-14 | T21 独立审查 / 协调裁定 | ADR-0007“每次发布升version”若相对任意开发PR基线判断，会拒绝已预置0.1.0的M1首次v0.1.0，以及提前升开发号后同号正式发布。 | 升版约束相对前次已发布记录，开发预置不算发布；manifest匹配最新标题，已发布版本不得复用，base已发布标题保留且不能降为未发布。 | 采用兼容M1目标的最小解释；不修改规划/版本绕过。仅以可验证CHANGELOG历史判断，未宣称覆盖外部release。 |
 | 2026-10-14 | M1 独审 / T04 限定裁定 | f2 的 HTML 模块脚本真实连接 main→bootstrap→router，但固定 expected 仅接受后三项；规格未限定唯一起点。 | 旧 expected、raw 结果保持；仅新版本用既有 contains_any 接受含或不含该 HTML 起点的两个完整精确数组，仍拒绝缺项、乱序和无依据额外路径。 | 独审与协调均核实源码；不做任意前缀容忍，新定义在新系列开始前冻结。判断错误的成本为表示容忍扩大，以明确反例约束。 |
+| 2026-10-15 | 第三系列独审 / T05 | entry_chain 的按调用顺序说明与包含加载期初始化的示例缺少统一分支/终点定义；f2r3固定数组失败，但后续模块确有初始化用途。 | 保留原expected/raw与最终歧义裁定，不新增该槽确定语义P2；A/B独立修复继续，app-deep含义暂不改。 | 已询问未来选择启动主线加人读分支，或另立完整关系规格，待用户选择；未代为改权威规格。 |
 
 ## 本轮执行约定
 
@@ -695,3 +696,28 @@ Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
 - 最终manifest SHA256 `81d9ef5862f45f5a2d8d72af7b9e0900770a99b0820ffeb97f686f2635509c5a`：815固定执行项全匹配，另202明确root_mutable亦读取记录，不能称1017全部冻结；后续新增独审材料另由当前独审快照绑定。原prepared113项及hash `17d9b52d12379379317d0daeecb6044e4384d27dcb5f0d936bf970f87ec08d58`保留。
 - 本会话新增 [第三系列incident](../harness/incidents/2026-10-15-m1-third-bootstrap.md)，依据ignored `M1-third-validation-report.md`、`M1-third-review.md`、final-series-audit及final-review-current-manifest；仅归档和本次进度记录，未修改产品/旧评分/旧证据，未运行模型/安装/默认测试，未stage/commit。
 - 阻塞保持：规定技术门失败、附加P2未闭合、真实仓库bootstrap+agents正常人工体验未完成；发布及M2均不放行，M2/T10未启动，不代签人工、不tag/push。后续有限修复须具体处置和独审，不用放宽expected、禁止合法refresh或混旧成功翻绿。
+
+### 2026-10-15 T05 缺基线反馈与最终文本窄修复
+
+- 第三系列已归档于 `d75783b`。本波只改 bootstrap 内部 helper、SKILL、coverage/ownership/artifacts 引用及直接测试，共6文件；不改 app-deep、schema、公开 checker、expected/runner 或旧评分。独立实现与审查均完成，受审产品差异21652字节、SHA256 `ecae004bedaed768e3d0cc242dec1cfce3169ecb37dd4b8f8978d0b8604b84d3`，独审结论本波可合入，无必须修改项；不表示整票T05完成。
+- 标准根安全读取真实 ENOENT 才返回 `incomplete/reason:baseline_missing`、明确基线路径、空 findings/checked 与 scope:null，CLI仍exit1；反馈明确未读 sources/evidence、未建 owner、未比较事实。顶层双数组协议先校验，YAML解析、子合同、权限、软链及未知schema原失败/受限边界保持，不用缺基线自动授权bootstrap。
+- 步骤3改为真实反馈后结合调查判模式；写入优先已有编辑工具直接接收最终文本/定向diff，删除首选手写JS生成器示例。保留授权路径、外部字节、有效字段及no-op零写；无法保真时不修改该项。uncertainty区分持久未知与本轮未读/未运行；新增无发现表例子仅用于本轮已确认无共享封装且获授权新建自有文档，普通入口独立索引，不清空既有PA/LI。
+- 协调裁定：撤回空LI/source自动review，canonical指针不证明段落所有权；代价是相关语义仍需人工核对，P2不因本波机制通过关闭。入口链仍有调用顺序/加载初始化的规格歧义，已向用户询问未来采用启动主线加文档分支，或另立完整关系规格；答复前不修改该含义，也不重判第三系列f2r3。
+- 实现先红时缺基线用例返回旧ENOENT；修复后实现及独审各自运行 `rtk proxy node --test tests/bootstrap-coverage.test.mjs`，并以共享Node18.20.8执行同一定向文件，均exit0、12/12。独审真实EACCES探针：当前Node API及两Node CLI保持权限错误、CLI exit1、无baseline_missing，读取阶段mode/mtime/ctime不变。独审原始计数：
+
+```text
+Node25.8.1:
+ℹ tests 12
+ℹ pass 12
+ℹ fail 0
+ℹ skipped 0
+Node18.20.8:
+# tests 12
+# pass 12
+# fail 0
+# skipped 0
+```
+
+- 实现与独审分别实际使用编辑工具做独立文本探针：指定特殊字符、外部段、CRLF、0640模式及文档/YAML同一命令值保留。无末尾换行确实被追加LF，已准确写入ownership限制；不能把该边界称保真，也不能推广成任意文件安全。no-op探针仅连续只读比较，不能冒充真实模型主动no-op。未执行业务/检索命令。
+- 独审SKILL总51行，改动Markdown的20个链接/锚点有效；协调 `rtk proxy git diff --check` exit0。ignored `T05-M1-baseline-text-fix-report.md`、`T05-M1-baseline-text-review.md` 与各自原始探针/失败/最终输出保留，未重跑旧默认套件、模型或安装。
+- 后续：行为遵循、完整语义及超时仍待真实验收；第三系列技术失败、F01–F05、入口链选择和人工正常体验保持未闭合。未放行第四系列、发布或M2，T10未启动。

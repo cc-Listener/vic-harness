@@ -37,6 +37,13 @@ guarded path 优先指向直接承担风险的具体源文件或配置文件，�
 4. **检索命令**：给可在仓库根执行的 `rg` 示例，搜索路径确实存在，覆盖导出、注册或调用。
 
 没有封装时如实写“尚未发现共享封装”，保留表头并用一行说明 `import/包入口/源码/导出` 均“未发现/无法确认”；这是调查结果，不是虚构组件。符号索引说明未发现组件，可单列已核实的普通入口符号并标明不是共享封装。
+仅当本轮调查已确认无共享封装、文件此前不存在且全部正文获授权自有时，可用以下最小例子；普通入口另列普通符号索引并保留真实路径：
+
+| 场景 | 优先import | 包入口 | 关键源码 | 代表导出 |
+| --- | --- | --- | --- | --- |
+| 本轮允许范围尚未发现共享封装 | 未发现/无法确认 | 未发现/无法确认 | 未发现/无法确认 | 未发现/无法确认 |
+
+不因无包、barrel 或本仓调用点就判无封装；不因采用例子清空既有 PA/LI，不对现有外部文档套模板，也不新增自动检测。
 此时事实中的 `systems/preferred_abstractions/locate_index` 保持空数组；定位顺序指向实际 README/源码，给真实搜索命令，并在 uncertainty 写明尚缺规范/包配置。不得把普通入口伪装为组件、编造 import 或给不存在路径。
 只有原则没有入口、符号索引、顺序或搜索方法的组件文档不完整，须 refresh；质量门适用于显式等价入口和 app-local 文档。
 
@@ -64,6 +71,7 @@ package script 的 gate 记录公共脚本入口：npm 用 `npm run <script>`、
 - 新 gate 生成 `command`；`command_hint` 是只读兼容别名，同现时须一致，冲突先核实。不按 example 同时生成两份命令。
 - `GP/VG/PA/LI/CR` 每条有根/子集合唯一且稳定的 ID、非空仓库 evidence、verified/inferred confidence；evidence 为真实文件/目录或有效行号，不用 glob。
 - 未证实的结论放 `uncertainty.missing_information/inferred_but_unverified`；事实前提保留 v1 `multi_agent_readiness`，不写 `use_multi_agent/ready_for_multi_agent` 等运行判断。
+- uncertainty 区分仓库长期未知/受阻事实与本回合尚未读/未执行状态：后者留本轮回复，不写成持久事实的永久缺失；已经读过且确认后不保留过期“本轮未读”。合法未确认、无法安全执行和有效旧执行证据不删除，不输出敏感值。
 - 根 `apps[]` 与 `navigation_layer.scoped_guidance` 只在实际发现 app/scoped 入口时填写。子合同形状和无重复规则见 [app-deep.md](app-deep.md)。
 
 ## 受限输入：非标准入口或自定义 schema

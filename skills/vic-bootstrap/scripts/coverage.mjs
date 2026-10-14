@@ -21,7 +21,14 @@ export async function checkCoverage(root, input = {}) {
   }
   const findings = [], checked = [];
   const add = (kind, owner, evidence, message) => findings.push({ kind, owner, evidence, message });
-  const main = load(await read('contracts/project-context.yaml'));
+  const baseline = 'contracts/project-context.yaml';
+  let baselineText;
+  try { baselineText = await read(baseline); } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    return { status: 'incomplete', reason: 'baseline_missing', baseline, findings: [], checked: [], scope: null,
+      limitations: ['标准根缺少比较基线：未建立 owner；未读取 sources 或事实 evidence；未核验事实项；未比较机器投影。零 findings 不表示通过；可能存在非标准 canonical 根，模式与写权限仍由已完成的入口及所有权调查决定。'] };
+  }
+  const main = load(baselineText);
   // 未知对象/版本交标准检查器处理，禁止用此反馈冒充迁移成功。
   const known = new Set(['version','schema_version','bootstrap_status','navigation_layer','project_map','apps','conventions','component_contract','agent_context','uncertainty','non_goals','integrations','foreign_sections','refreshed_at_commit']);
   if (!main || main.schema_version !== 2 || (main.version !== undefined && main.version !== 1) || Object.keys(main).some(k => !known.has(k))) return { status: 'restricted', findings: [], checked: [], limitations: ['未知根合同，保留原文并交标准检查器与迁移调查'] };
