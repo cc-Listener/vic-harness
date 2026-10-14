@@ -9,7 +9,7 @@
 | T00 | 建仓库并核验未决问题 | M0 | ✅ | 2026-10-14 | Q1–Q4、Q9 已写结论；独立审查可合入；完整 LLM 回合留 T09 |
 | T01 | 插件骨架 | M1 | ✅ | 2026-10-14 | 六技能隔离安装与发现验收通过；独立审查可合入 |
 | T02 | 合同 schema v2 | M1 | ✅ | 2026-10-14 | 标准 JSON Schema 小子集；58 个 v1 业务路径、163 个项目示例路径验收通过；独立审查可合入 |
-| T03 | vic-check：解析与合同规则 | M1 | ✅ | 2026-10-14 | 六条规则与 CLI；R1 应用文档漏扫已修；Node 18/当前 Node 23 tests 通过，示例 0 error；独立复审可合入 |
+| T03 | vic-check：解析与合同规则 | M1 | 🟡 | 2026-10-14 | 原六条规则与 CLI 已审；真实试用 C09 的 RTK 调用假阴性已修，两 Node 干净树40项通过；等待独立限定复审 |
 | T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 特殊文件名与合法表示误拒绝均已修复；两Node90项及各25独立探针通过；限定复审可合入 |
 | T05 | vic-bootstrap v2 | M1 | 🟡 | | 正在真实两轮评测并修正应用边界、定位索引和幂等问题；失败记录保留，尚未最终验收 |
 | T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 静态迁移与真实试用暴露问题的文本修复均已独立审查通过；80行、24字段/111节点保留，实际行为复测中 |
@@ -358,3 +358,23 @@ EXIT=0
 - 两个 mjs 的 node --check 与限定四文件 git diff --check 均 exit 0。报告在忽略目录 T04-representations-fix-report.md。contains_any 只证明正确值存在，不禁止额外错误值，已专门回归此边界。
 - 旧 T05 失败记录、旧 before/first 与 expectedHash 未修改或改绿；新 expected 不可混用旧快照冒充重验。没有运行真实模型，本次仅确定性断言修复；提交时 T04 保持 🟡，等待独立限定复审。
 - 独立限定复审：修复提交 `d70792b` 可合入，无必须修改项。两Node各自实际重跑90项及25个额外探针，精确候选、非法配置exit2、旧数组语义、反例及原完整树基线回归均通过；受审文件与提交逐字节一致。报告 `T04-representations-review.md`。
+
+### 2026-10-14 T03 C09 RTK 检索调用假阴性修复
+
+- 基线：`acbbe252b16832882ab65dd99213bebb0361c1c8`。真实 T05 f2 首轮产物三份组件文档第21行均为 `rtk rg`；原 C09 只接受直接 `rg`，导致三个假阴性。仅修改 `scripts/lib/components.mjs`、现有 `tests/documents.test.mjs` 与本进度文件，T03 暂保持 🟡 等待独立限定复审。
+- 明确接受 `rg`、`rtk rg`、`rtk proxy rg`，要求同行参数；保留提示符与原有 `&&`/`;` 调用边界。引号内分隔符不作为调用边界，命令名提及、echo 字符串和无关 wrapper 均不算调用。不执行被扫描命令、不新增 RTK/npm 运行时依赖、不改变原文件发现、解析、边界和只读行为。
+- 先增加有意义反例/正例，再修复：新增两项测试涵盖18个正例与13个反例，红阶段12项/10通过/2失败，绿阶段12/12通过。当前 Node v25.8.1 工作根默认 `rtk proxy node --test` 40/40通过；官方 Node v18.20.8 显式全套产品 `--test tests/*.test.mjs` 40/40通过。
+- 官方 Node18 工作根默认 `--test` 发现忽略目录 M1-real-trial 的外部仓库 before/after 测试副本，354项中346通过/8失败，因其预期的根脚本不存在；原失败日志保留，未改发现规则、删除现场或扩大产品改动，不能宣称该工作根默认命令全部通过。另用 `git archive` 基线构建干净临时发布树，同字节覆盖本票两文件、不复制 `.superpowers`，两个 Node 实际默认 `--test` 均40/40通过；源码 SHA256 与原始输出留存，临时树自动清理。
+- T04 d70792b 稳定后两个 Node 实际重跑 `evals/verify-fixtures.mjs`，均 exit 0、`T04_VERIFIED=90`。真实 f2 first-repo 使用实际 checker 只读复扫，三个 C09 消失，error=0/warn=0；163个条目的文件 SHA256、软链目标及权限前后相同。
+
+```text
+红阶段：tests=12 pass=10 fail=2 exit=1
+绿阶段：tests=12 pass=12 fail=0 exit=0
+干净发布树 Node v25.8.1 默认 --test：tests=40 pass=40 fail=0 exit=0
+干净发布树 Node v18.20.8 默认 --test：tests=40 pass=40 fail=0 exit=0
+两 Node T04：T04_VERIFIED=90 exit=0
+实际 f2：entries=163 content_and_permissions_unchanged=true C09_count=0
+实际 checker：summary={error:0,warn:0} findings=[] exit=0
+```
+
+- 可复跑证据：忽略目录 `.superpowers/sdd/07-roadmap/T03-rtk-fix-report.md`、`T03-rtk-clean-tree.py/json`、`T03-rtk-readonly.py/json` 及红绿/两 Node/T04 原始输出。限定 `git diff --check` exit 0。未重跑 LLM、未改技能源或历史 T05 产物/result；本次验收只证明限定规则修复与确定性回归。

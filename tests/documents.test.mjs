@@ -147,3 +147,23 @@ test('C09：显式 component-contract 来源复用已有等价文档，不强制
   await put(root, 'docs/ui-guide.md', '# 只有抽象原则\n');
   assert.ok(inspect(root).report.findings.some(f => f.id === 'C09' && f.file === 'docs/ui-guide.md'));
 });
+
+test('C09：直接与 RTK 代理 rg 调用在真实 Markdown 命令形式中通过', async t => {
+  const root = await fixture(t);
+  const base = componentDoc.slice(0, componentDoc.indexOf('## 检索命令'));
+  for (const command of ['rg -n "Button" src', 'rtk rg -n "Button" src', 'rtk proxy rg -n "Button" src']) {
+    for (const example of [`\`\`\`sh\n${command}\n\`\`\``, `检索：\`${command}\`。`, `    ${command}`, `$ ${command}`, `pwd && ${command}`, `pwd; ${command}`]) {
+      await put(root, 'docs/component-contract.md', `${base}## 检索命令\n${example}\n`);
+      assert.equal(inspect(root).report.findings.filter(f => f.id === 'C09').length, 0, example);
+    }
+  }
+});
+
+test('C09：命令名提及、字符串和无关 wrapper 不算 rg 调用', async t => {
+  const root = await fixture(t);
+  const base = componentDoc.slice(0, componentDoc.indexOf('## 检索命令'));
+  for (const example of ['使用 rg 检索组件。', '`rg`、`rtk rg`、`rtk proxy rg`', 'rg', 'rtk rg', 'rtk proxy rg', 'echo rg', 'echo "rtk rg -n Button src"', 'echo "提示; rtk rg -n Button src"', "echo '提示 && rg -n Button src'", 'other rg -n Button src', 'rtk other rg -n Button src', 'rtk proxy other rg -n Button src', 'rtk rg-other -n Button src']) {
+    await put(root, 'docs/component-contract.md', `${base}## 检索命令\n${example}\n`);
+    assert.ok(inspect(root).report.findings.some(f => f.id === 'C09'), example);
+  }
+});

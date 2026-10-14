@@ -41,6 +41,27 @@ function hasTable(prose) {
   return false;
 }
 
+function hasSearchCommand(text) {
+  // 只识别文档中的明确调用；不执行命令，也不把 echo 字符串内的分隔符当成调用边界。
+  const invocation = /^[ \t]*(?:\$[ \t]*)?(?:rtk[ \t]+(?:proxy[ \t]+)?)?rg[ \t]+\S/;
+  for (const line of text.split('\n')) {
+    let start = 0, quote = null;
+    for (let index = 0; index < line.length; index++) {
+      const char = line[index];
+      if (char === '\\' && quote !== "'") { index++; continue; }
+      if (quote) { if (char === quote) quote = null; continue; }
+      if (char === "'" || char === '"') { quote = char; continue; }
+      if (char === ';' || (char === '&' && line[index + 1] === '&')) {
+        if (invocation.test(line.slice(start, index))) return true;
+        if (char === '&') index++;
+        start = index + 1;
+      }
+    }
+    if (invocation.test(line.slice(start))) return true;
+  }
+  return false;
+}
+
 export async function componentChecks(files, repo) {
   const findings = [];
   for (const file of files) {
@@ -53,7 +74,7 @@ export async function componentChecks(files, repo) {
       const order = prose.match(/^#{1,6}\s+[^\n]*(?:定位顺序|检索顺序|locate order|lookup order)[^\n]*\n([^#]*)/im);
       if (!order || !/(?:^\s*\d+[.)、]\s*\S|先[^\n]+(?:再|后)|first[^\n]+then)/im.test(order[1])) missing.push('明确的定位顺序');
       const inline = [...prose.matchAll(/`([^`\n]+)`/g)].map(match => match[1]).join('\n');
-      if (!/(?:^|\n|&&|;)\s*(?:\$\s*)?rg\s+\S/m.test(`${code}\n${inline}\n${prose}`)) missing.push('至少一条 rg 检索命令');
+      if (!hasSearchCommand(`${code}\n${inline}\n${prose}`)) missing.push('至少一条 rg 检索命令');
     }
     if (missing.length) findings.push({ id: 'C09', severity: 'error', file, message: `组件合同缺少：${missing.join('；')}`,
       hint: '补充定位表、定位顺序和 rg 示例；已有等价文档用 sources 的 kind: component-contract 显式指向' });
