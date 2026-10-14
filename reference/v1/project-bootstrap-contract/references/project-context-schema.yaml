@@ -1,0 +1,95 @@
+# 共享 schema 的字段名保持英文，以保证 machine-readable 稳定性。
+# description、uncertainty、以及其他解释性值默认使用简体中文，除非用户明确要求其他语言。
+version: 1
+
+bootstrap_status:
+  level: bootstrap_partial_but_usable
+  allowed_values:
+    - bootstrap_complete
+    - bootstrap_partial_but_usable
+    - bootstrap_missing_or_stale
+  description: >
+    描述 bootstrap 层是否完整。这里只表达项目事实状态，不表达 multi-agent 决策结论。
+
+navigation_layer:
+  description: 仓库导航层位置与角色。
+  fields:
+    agents_md:
+      path: string
+      role: repository_navigation
+    effective_guidance_entry:
+      path: string
+      role: active_guidance_entrypoint
+      description: 当前真正生效的 guidance 入口，优先体现 `AGENTS.override.md` > `AGENTS.md`。
+    effective_guidance_kind:
+      value: agents_md # agents_override_md | agents_md | equivalent_navigation
+      description: 标记当前生效入口类型，供后续 consumer 判断优先级语义。
+    agent_index:
+      path: string
+      role: agent_directory_index
+      optional: true
+
+project_map:
+  description: 仓库结构与主要边界。
+  fields:
+    repo_type: string
+    workspace_mode: string
+    top_level_modules:
+      - name: string
+        path: string
+        role: string
+    guarded_paths:
+      - path: string
+        reason: string
+
+conventions:
+  description: 项目规范来源与验证入口。
+  fields:
+    sources:
+      - path: string
+        kind: string
+    validation_gates:
+      - name: string
+        command_hint: string
+
+component_contract:
+  description: 二次封装组件、共享 abstraction 与推荐入口。
+  fields:
+    sources:
+      - path: string
+        kind: string
+    systems:
+      - name: string
+        path: string
+        preferred: boolean
+    preferred_abstractions:
+      - name: string
+        path: string
+        use_instead_of:
+          - string
+
+agent_context:
+  description: 与 agent 读取相关、但仍属于事实层的信息。这里只提供前置事实，consumer 需自行推导 `ready_for_multi_agent` 等运行期结论。
+  fields:
+    canonical_agent_contracts:
+      - path: string
+        kind: string
+        optional: true
+    multi_agent_readiness:
+      ownership_boundaries_clear: boolean
+      guarded_paths_defined: boolean
+      bootstrap_layer_complete: boolean
+
+uncertainty:
+  description: 缺失信息与保守推断。
+  fields:
+    missing_information:
+      - string
+    inferred_but_unverified:
+      - string
+
+non_goals:
+  - 不在这里定义 topology 推荐
+  - 不在这里定义 agent 数量
+  - 不在这里定义 execution order
+  - 不在这里定义 reviewer 或 judge 拆分策略
