@@ -9,7 +9,7 @@
 | T00 | 建仓库并核验未决问题 | M0 | ✅ | 2026-10-14 | Q1–Q4、Q9 已写结论；独立审查可合入；完整 LLM 回合留 T09 |
 | T01 | 插件骨架 | M1 | ✅ | 2026-10-14 | 六技能隔离安装与发现验收通过；独立审查待定 |
 | T02 | 合同 schema v2 | M1 | ✅ | 2026-10-14 | 标准 JSON Schema 小子集；58 个 v1 业务路径、163 个项目示例路径验收通过；独立审查待定 |
-| T03 | vic-check：解析与合同规则 | M1 | 🟡 | | 正在实现 scripts/ 与 tests/；Node 18 解析器兼容性已验证 |
+| T03 | vic-check：解析与合同规则 | M1 | ✅ | 2026-10-14 | 六条规则与 CLI；Node 18/当前 Node 20 tests 通过，示例 0 error，1454 文件 97.09ms；独立审查待定 |
 | T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 四夹具与两基线断言器；Node 18/当前 Node 33 项确定性验收通过；独立审查待定 |
 | T05 | vic-bootstrap v2 | M1 | ⬜ | | |
 | T06 | vic-agents v2 | M1 | ⬜ | | |
@@ -41,6 +41,7 @@
 | 2026-10-14 | 规划审查 / T02 | v2 示例省略或改形了 v1 字段，与“保留全部字段、旧消费者可读”的承诺冲突。 | 兼容承诺优先：规范输出保留 `version`、`bootstrap_status.level`、`effective_guidance_kind`、`agent_index`、`preferred_abstractions[].path`；允许读取示例中的 scalar 状态。`agent_index` 只作旧输入兼容，不生成平行层。 | 按最保守理解继续，原规格不改。 |
 | 2026-10-14 | 规划审查 / T02–T05 | 来源字段在 schema 中必填，但完整来源能力明确到 M2 才实现。 | M1 schema 不将 M2 字段设为 required；M1 保证 evidence/confidence，M2 通过 C10 检查完整来源。 | 按版本边界继续，原规格不改。 |
 | 2026-10-14 | 规划审查 / T03 | C02 的“所有路径存在”与 `present:false`、`detected:false`、`optional:true` 的不存在指针冲突。 | 跳过明确不存在/可选指针；文件与目录都可作为路径，glob 仅在声明支持 glob 的字段使用。 | 按最保守理解继续，原规格不改。 |
+| 2026-10-14 | 协调 / T03–T05 | 固定要求 `docs/component-contract.md` 会妨碍复用已存在的等价组件文档或 app-local 入口。 | 每份合同通过既有 `component_contract.sources[].{kind: component-contract, path: ...}` 显式指定组件文档；有指针不强制默认同名文件。无指针时根用默认路径，子应用用根 `apps[].docs` 下的默认文件；不按标题猜测入口。 | 复用既有 schema 字段，T05 生成与 C09 读取一致。 |
 | 2026-10-14 | 规划审查 / T06–T07 | T06 要运行 `--agents`，该能力到 T07 才实现。 | T03 完成后先做 T07，再做 T06；不改变依赖图。 | 拓扑有效的实现顺序调整。 |
 | 2026-10-14 | 协调 / T00 | 路线图要求 GitHub 仓库，HANDOFF 把远端创建列为可选。 | 使用现有规划目录作为本地仓库，分支 `feat/vic-harness`，基线 `a9e0e08`；远端创建与发布单独记录。 | 按 HANDOFF 的可选项处理。 |
 | 2026-10-14 | 规划审查 / T11–T12 | ADR-0006 的 agents 每次日志与 f5 真正零写冲突。 | `vic-agents` 真正 no-op 不追加日志、不创建 contracts；有配置变更才按允许字段记录。其他 skill 的日志规则不受此例外影响。 | 用户明确选择“真正零改动：no-op 不写日志”，作为本次实现与验收的最高优先级依据。 |
@@ -51,7 +52,7 @@
 - 协调会话不连续承担实现 ticket；每个 ticket 使用全新上下文子代理，并由独立上下文重新运行验收。
 - 每个 ticket 独立提交；实现证据、审查结论、实际运行证据分别记录。
 - M1 完成后仍须检查 L2 三次运行门槛和真实仓库试用；M2 的 2–4 周使用门槛不能用一次测试代替。
-- `node --test` 尚无实现可测；当前不能宣称任何实现 ticket 通过。
+- 测试和检查器验收以各 ticket 留存的实际运行证据为准；不能将占位骨架、未执行的 LLM 回合或其他任务的报告冒充本票验收。
 
 ## 迁移勾选
 
@@ -175,6 +176,20 @@ T04_VERIFIED=33
 - 未完成 / 遗留：手写理想产物只验证夹具和断言器；未执行真实 skill 或 LLM 评测，不证明 bootstrap 行为、L2 三次稳定性或 L3 答对率。真实 checker 来自并行 T03 实现的当前工作树，T03 自身仍须独立提交与审查；T04 不修改 scripts/tests。questions.yaml 留 T16 消费。
 - 给下个会话的提示：T05 在四夹具上实际调用 bootstrap；T09 按唯一前缀解析 f1 等短名，before/first 快照必须放在目标 repo 外，只有 final 通过才算完整 L2。M1 第二次不能写 refresh-log。`verify-fixtures.mjs` 可独立复跑、自动清理临时目录，不调用 LLM、不安装或运行业务依赖。
 - 独立审查：待定。
+
+### 2026-10-14 T03 vic-check：解析与合同规则
+- 做了什么：新增只读、不联网的 Node 检查器，实现 C01–C04/C06/C09；schema 执行实际 17 关键词子集，跨根/子合同 ID 查重、导航 kind/命令兼容一致性；C02 检查路径/目录、证据行号、缺失指针豁免和仓库/软链边界。C04 相对所在 Markdown 解析链接并隔离代码示例；C09 支持正式等价文档指针裁定。
+- 产出文件：`scripts/vic-check.mjs`、`scripts/lib/{checker,schema,yaml,contracts,paths,markdown,documents,components}.mjs`、`scripts/vendor/{js-yaml.mjs,js-yaml.LICENSE.txt,README.md}`、`tests/{cli,contracts,documents,example}.test.mjs`、`tests/support/fixtures.mjs`、本进度文件。ignored `T03-report.md` 与原始输出在 `.superpowers/sdd/07-roadmap/`。
+- parser 来源：js-yaml 5.4.3 官方 npm 发行与 nodeca/js-yaml，单文件 ESM 无静态 import；保留原 MIT banner 和完整许可证。官方 tarball 的 SHA512 integrity 一致，ESM SHA256=`2ed2785988d4737fa33bcf4330be3a7b88d0da7b1fd534e9811cc48313ba0f6e`；上游 package 没有 engines 声明，因此采用实际 Node 18.20.8 验证，不凭版本推断。解析使用 JSON_SCHEMA 保持日期为字符串，读取层拒绝循环 alias。
+- CLI：默认 `--all` 与 `--contract` 跑当前合同规则；JSON 唯一对象含 `summary.error/warn`，与 quiet 同时出现时 JSON 优先；quiet 成功为空、有问题一行；未初始化普通输出“未初始化”、quiet 为空、exit 0。规则 error exit 1，自身/参数错误 exit 2；strict 对旧 command_hint 报 C01 error 迁移提示，行号/行数 warning 不升级。`--agents`、`--drift` 尚未实现，明确 exit 2，分别留 T07/T10。
+- 先失败后通过：未实现 CLI 为 MODULE_NOT_FOUND；非法 schema_version、跨合同 ID/别名、路径/行号、行数/链接、用户绝对路径/组件质量门，以及非默认子合同/仓库外目录软链均先观察到失败，再逐项实现通过。测试只通过公共 CLI 观察行为，夹具在临时目录内生成，不依赖 evals。
+- 验证命令与原始关键输出：`rtk proxy node --test`（Node 25.8.1）→ tests 20 / pass 20 / fail 0 / duration_ms 1358.4375；复用已核验官方 Node 18.20.8 执行相同 `--test` → tests 20 / pass 20 / fail 0 / duration_ms 1496.667208。六条规则均至少一通过和一失败；真实合同拒绝多文档、重复 key、自定义 tag、循环 alias 和坏 YAML；JSON/quiet/strict/全部退出码均覆盖。
+- 示例验证：example 用 loadAll 读出两份文档，分别落为根与子真实合同，并搭建全部文件/目录/证据/组件文档引用。`example.test.mjs` 实际输出对应 status=0、summary.error=0、summary.warn=0，测试通过。
+- 性能与只读证据：Node 18.20.8 对含 250 文档、1200 源码及合同/配置等的 1454 文件初始化仓库执行完整 CLI；夹具准备不计时，CLI 启动计入。原始输出 `{"node":"v18.20.8","files":1454,"elapsed_ms":97.09,"exit":0,"summary":{"error":0,"warn":0},"unchanged":true}`；检查前后目录清单与逐文件 SHA256 完全相同，临时目标已清理。
+- 其他验证：`rtk git diff --check` 与暂存后的 `rtk git diff --cached --check` 均 exit 0；暂存统计仅 18 个本票文件（scripts/tests/progress）。产出无软链/用户绝对路径/新增 npm 运行时依赖。Node18 官方归档 SHA256 对照 SHASUMS256 通过，临时二进制和 ignored 来源记录保留供 T04/T07/独立审查复用，由协调者最终清理。
+- 未完成 / 遗留：A 规则、C05/C07+、漂移和日志一致性尚未实现；Markdown 扫描不校验文件内部 fragment 标题；glob 覆盖当前 schema/example 的 `*`、`?`、`**`。真实日历和命令执行证明按 T02 边界不提前补。没有执行 LLM 回合或真实业务 skill，未声称其验收通过。
+- 给下个会话的提示：T07 复用 checker 编排/报告结构，补 TOML parser 与 `--agents`；T05 使用明确 `kind: component-contract` 复用等价文档，或按默认路径生成，所有路径相对仓库根。M1 checker 只对已实现规则报告，不以未实现能力假成功。
+- 独立审查：待协调会话派发；提交基线 `c38694a`，本票只暂存 scripts/tests/progress，不修改 evals。
 
 ```
 ### <日期> <ticket ID> <模型>
