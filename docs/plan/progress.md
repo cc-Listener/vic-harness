@@ -9,7 +9,7 @@
 | T00 | 建仓库并核验未决问题 | M0 | ✅ | 2026-10-14 | Q1–Q4、Q9 已写结论；独立审查可合入；完整 LLM 回合留 T09 |
 | T01 | 插件骨架 | M1 | ✅ | 2026-10-14 | 六技能隔离安装与发现验收通过；独立审查待定 |
 | T02 | 合同 schema v2 | M1 | ✅ | 2026-10-14 | 标准 JSON Schema 小子集；58 个 v1 业务路径、163 个项目示例路径验收通过；独立审查待定 |
-| T03 | vic-check：解析与合同规则 | M1 | ✅ | 2026-10-14 | 六条规则与 CLI；Node 18/当前 Node 20 tests 通过，示例 0 error，1454 文件 97.09ms；独立审查待定 |
+| T03 | vic-check：解析与合同规则 | M1 | ✅ | 2026-10-14 | 六条规则与 CLI；R1 应用文档漏扫已修；Node 18/当前 Node 23 tests 通过，示例 0 error，1455 文件 103.34ms；待独立复审 |
 | T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 四夹具与两基线断言器；R1 特殊文件名漏报已修；Node 18/当前 Node 51 项通过；独立复审可合入 |
 | T05 | vic-bootstrap v2 | M1 | ⬜ | | |
 | T06 | vic-agents v2 | M1 | ⬜ | | |
@@ -207,3 +207,11 @@ T04_VERIFIED=33
 - 新增 18 项回归覆盖 `__proto__`、`constructor`、`toString` 普通文件新增/不变/内容修改/删除，以及 `__proto__` 空目录和断链新增/不变/删除；变化要求 exit 1 且 tree_changes 精确包含目标路径，不变要求 exit 0。原 33 项均复跑通过。
 - 交接：独立审查原结论需修改，仅 R1 必修；本次修复已确定性验证，待独立限定范围复审。仍未执行真实 skill/LLM；详细红绿输出见 ignored T04-report.md。
 - 独立复审：`review_t04` 结论“R1 已解决，可合入”，限定修复差异没有新必须修改项。实际复跑当前 Node 与 Node 18 均 `T04_VERIFIED=51`；原始独立 `__proto__` 新增探针现在 exit 1，变化列表包含该文件；差异检查通过。实现 `c38694a`，修复 `9a70705`，完整复审报告 `T04-review-r1.md`。
+
+### 2026-10-14 T03 独立审查 R1 修复
+- 审查必修：根合同 `apps[].docs` 声明的应用目录未进入 C04/C06，项目映射文档中的坏链接和用户绝对路径漏报。读取完整 T03-review 后仅修此项；基线 `207f4e9`。
+- 产出：`scripts/lib/checker.mjs` 汇总并规范化根合同显式应用文档目录，沿用 Repository 的仓库/真实软链边界；目录与文件分别 Set 去重，纳入 Markdown C04 和全文件 C06 集合。`tests/documents.test.mjs` 补 3 项回归：真实 app-local 项目映射正反例、重叠目录/非 Markdown C06、越界和外部软链不读取。
+- 先复现：`rtk proxy node --test tests/documents.test.mjs` → tests 10 / pass 8 / fail 2；坏文档错误退出码实际为 0（预期 1），app-local 非 Markdown C06 数量实际为 0（预期 1）。
+- 验证：`rtk proxy node --test` → tests 23 / pass 23 / fail 0 / duration_ms 1616.831667；`rtk proxy <T03-node18.txt 的 NODE_PATH> --test` → tests 23 / pass 23 / fail 0 / duration_ms 1832.788166。完整 example 的根/子文档均 0 error，既有六规则和 CLI 回归全部通过。
+- 性能/只读：Node18 临时仓库含 250 份 app-local 文档、1200 源码、根/子合同与组件导航文档共 1455 文件，执行完整 CLI（计入启动，准备不计时）；原始输出 `{"node":"v18.20.8","files":1455,"elapsed_ms":103.34,"exit":0,"summary":{"error":0,"warn":0},"unchanged":true}`。前后全部目录清单与逐文件 SHA256 相同，临时夹具已清理。
+- `rtk git diff --check` exit 0。仅本票 scripts/tests/progress 改动；未改 schema/evals/规划/ADR，未启动子代理，未 push/发布。R1 已修，待新上下文独立复审；原报告其他边界与后续票分工保持有效，详见 ignored T03-report.md 追加证据。

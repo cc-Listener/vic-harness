@@ -59,7 +59,14 @@ export async function checkRepository(root, options = {}) {
   }
   findings.push(...contractSemantics(records, options.strict));
   findings.push(...await contractPaths(records, repo));
-  const docs = await repo.files('docs');
+  const documentDirectories = new Set(['docs']);
+  const rootContract = records.find(record => record.file === 'contracts/project-context.yaml')?.value;
+  for (const app of Array.isArray(rootContract?.apps) ? rootContract.apps : []) {
+    if (typeof app?.docs !== 'string') continue;
+    const target = repo.boundary(app.docs);
+    if (!target.reason) documentDirectories.add(target.path);
+  }
+  const docs = [...new Set((await Promise.all([...documentDirectories].map(directory => repo.files(directory)))).flat())];
   const configs = await repo.files('.codex');
   const documentFiles = new Set([...docs, ...configs].filter(file => file.endsWith('.md')));
   documentFiles.add('AGENTS.md');
