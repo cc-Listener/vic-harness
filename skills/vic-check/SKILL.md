@@ -9,10 +9,10 @@ description: 只读检查项目合同、路径、AGENTS.md 体积、组件文档
 
 1. 确认目标仓库根与检查范围。目标根默认当前工作仓库；路径不明时先只读核实，避免检查插件自身。
 2. 从本技能实际 `SKILL.md` 所在目录解析 [检查脚本](../../scripts/vic-check.mjs)，即 `../../scripts/vic-check.mjs`。不要硬编码安装缓存，也不要假定普通 shell 有 hook 专用变量。需要 Node ≥18，零 npm 运行时依赖。
-3. 使用实际脚本路径和目标根执行下列命令。尖括号为文档占位，执行时替换并正确引用参数；遵守目标仓库要求的命令代理。
+3. 使用实际脚本路径和目标根执行下列命令。尖括号为文档占位，执行时替换并正确引用参数；实际执行遵守目标仓库的 guidance，仅当其明确要求且代理可用时包装命令。
 
 ```bash
-rtk proxy node "<实际插件根>/scripts/vic-check.mjs" --all --json --root "<目标仓库>"
+node "<实际插件根>/scripts/vic-check.mjs" --all --json --root "<目标仓库>"
 ```
 
 | 参数 | 当前语义 |

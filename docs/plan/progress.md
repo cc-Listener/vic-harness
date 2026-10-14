@@ -14,7 +14,7 @@
 | T05 | vic-bootstrap v2 | M1 | ✅ | 2026-10-14 | 24188fb完整独立票审通过；四fixture真实两轮/0error/全树no-op复验通过；open P2/P3已归档，M1稳定性未通过 |
 | T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 静态迁移与两次限定修复均独立通过；真实试用主动no-op/完整摘要已验证，仍有3项已披露输出缺陷移交T12，完整行为未通过 |
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
-| T08 | vic-router 与 vic-check skill 文本 | M1 | 🟡 | | 两SKILL文本及CLI事实验证完成，🟡待独立票审；未执行真实LLM路由评测 |
+| T08 | vic-router 与 vic-check skill 文本 | M1 | 🟡 | | R1修复发布示例RTK依赖并通过Node-only复验，🟡待限定复审；未执行真实LLM路由评测 |
 | T09 | 评测运行器 | M1 | 🟡 | | T04/T05依赖已完成，独立新上下文实施中；固定provider及请求条件 |
 | — | 🚩 发布 v0.1.0 | M1 | ⬜ | | |
 | T10 | 来源字段与过期检测 | M2 | ⬜ | | |
@@ -505,3 +505,23 @@ OUTPUT_SCHEMA_ALL_PARSED_VALUES_UNCHANGED=true
 - 实际CLI探针：空目标all/contract/agents exit0；quiet空输出、json+quiet优先JSON；drift/help/范围冲突exit2且CHECKER诊断；代理旧max_threads在agents/all/agents+strict均exit0/error0/warn1；坏代理TOML与坏合同YAML分别exit1/error1/warn0。每次运行前后目标逐文件SHA256与路径清单一致，临时目录已清理。
 - 相关现有测试：`rtk proxy node --test tests/cli.test.mjs tests/contracts.test.mjs` 12/12通过；代理测试15/15通过（初次命令同时指定不存在的checker.test.mjs，实际只发现agents.test.mjs，不算不存在文件测试证据）。共27项实际通过；未新增镜像文本实现测试。
 - 范围与限制：仅两SKILL及本progress进入提交；无外部安装、npm依赖、业务gate、模型运行或发布。真实LLM路由、完整f1–f7、缓存内模型读取未执行，文本/CLI验证不替代行为验收或M1稳定性。实施详情与关键输出保存在ignored `T08-report.md`；状态保持🟡待独立票审。
+
+### 2026-10-14 T08 R1 发布命令兼容修复（待限定复审）
+
+- 针对独立票审唯一必修P2，仅修改 `skills/vic-check/SKILL.md` 两行：发布示例使用标准 `node`；实际执行按目标仓库 guidance，仅明确要求且代理可用时包装。没有新增RTK安装步骤或运行时依赖，开发shell仍使用rtk前缀。
+- 实际执行外层 `rtk proxy python3` 临时探针，在PATH仅含复制的Node二进制、无RTK的环境运行标准Node示例；原始关键输出如下。临时目标保留一个README文件，运行前后路径、SHA256和权限一致。
+
+```text
+NODE_ONLY_RTK_AVAILABLE=false
+NODE_ONLY_EXIT=0
+NODE_ONLY_STDOUT={"version":"0.1.0","root":".","summary":{"error":0,"warn":0},"findings":[]}
+NODE_ONLY_STDERR=
+READ_ONLY_BYTES_MODES=true
+TEMP_CLEANED=true
+LINK_OK=true
+SKILL_LINES=42
+SKILL_SYMLINK=false
+STANDARD_NODE_EXAMPLE=true; ABSOLUTE_USER_PATH=false; READ_ONLY_BOUNDARY_PRESERVED=true
+```
+
+- `rtk git diff --check` exit0；产品diff仅两行替换，只读禁止写入/网络/安装/业务gate及CLI语义未改。未重跑无关全套、未新增功能或测试；router、scripts、T09 evals、规划原件/ADR/reference未改。报告在ignored `T08-fix-report.md`，T08保持🟡待限定复审，不将R1确定性复验当LLM路由或M1发布验收。
