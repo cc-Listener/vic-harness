@@ -17,8 +17,8 @@ delegation:
 
 model_policy:
   strategy: inherit # inherit | explicit | mixed
-  checked_at: null # 实际核验日期，不复制模板日期
-  official_sources: []
+  checked_at: null # 本轮实际官方核验日期；仅读快照时保留 null，不复制快照或运行日期
+  official_sources: [] # 本轮实际核验的官方 URL；本地快照路径/日期放 rationale 或 uncertainty
   client_availability: unknown # verified | partial | unknown
   rationale: 用户指定优先，保留现有有效模型和推理设置
   uncertainty: [] # 账户可用性、快照版本、模型/推理兼容等未确认项
@@ -52,7 +52,9 @@ superpowers_integration:
 
 capability_inventory:
   status: partial # complete | partial | unknown
-  sources: []
+  sources: [] # 关键 available 的当前工具/宿主声明等可定位证据；计划/安装/配置本身不足
+  # 各项沿用字符串列表，在说明中分开可用、允许、已启动和权限验证；缺证据归 missing_but_relevant
+  # 未启动不等于不可用；只有实际添加计划才用 planned_additions，不为盘点 spawn/runtime 验证
   tools:
     available: []
     missing_but_relevant: []
@@ -129,7 +131,7 @@ evaluation:
 guardrails:
   global:
     max_agents: 4 # 本技能建议的总规模，不是官方上限
-    max_concurrent_subagents: 0 # 当前 single-agent 决策；不因此生成并发数 0 的配置
+    max_concurrent_subagents: 0 # 本次使用预算，不等于项目持久容量；不因此降低已有上限或生成并发数 0
     approval_boundaries:
       - 沿用已有授权，只在新增破坏性或外部操作超出授权时确认
   per_agent: [] # 按需要写范围、证据与实际权限限制，不是任意 TOML 字段

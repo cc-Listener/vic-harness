@@ -14,7 +14,7 @@
 | `default_subagent_reasoning_effort` | 子代理默认推理档位，需要与最终模型兼容 |
 | `interrupt_message` | 是否把中断写入模型上下文；当前默认启用，无需求则省略 |
 
-`max_threads` 是仍支持的旧别名。新配置用新字段；迁移已有配置时保持原数值语义，避免同时声明新旧字段，即使数值相同也会被本项目 A04 报 error。此为一致性规则，不冒称已验证 CLI 冲突行为。`max_depth` 在公开 schema 中仍存在，仅 V1 使用、V2 忽略；不用于新模板。`nickname_candidates` 属于旧角色注册子表，不是全局 scalar 字段；不在新模板生成。`job_max_runtime_seconds` 的当前运行语义没有公开证据。上述历史字段及未知配置均先保留，定向核对后迁移，不能一概删除或断言所有版本无效。
+`max_threads` 是仍支持的旧别名。合法别名不因 warning 自动迁移；仅换字段名须有授权和配置收益。纯别名迁移保持数值；数值改变属于另一项行为变更，须单独给出项目级依据。新配置用新字段；迁移已有配置时保持原数值语义，避免同时声明新旧字段，即使数值相同也会被本项目 A04 报 error。此为一致性规则，不冒称已验证 CLI 冲突行为。`max_depth` 在公开 schema 中仍存在，仅 V1 使用、V2 忽略；不用于新模板。`nickname_candidates` 属于旧角色注册子表，不是全局 scalar 字段；不在新模板生成。`job_max_runtime_seconds` 的当前运行语义没有公开证据。上述历史字段及未知配置均先保留，定向核对后迁移，不能一概删除或断言所有版本无效。
 
 若需要限制两条并发子线程：
 
@@ -23,7 +23,7 @@
 max_concurrent_threads_per_session = 2
 ```
 
-该值表示主会话之外最多两条子线程，不是两个 custom agent 定义。串行 staged pair 只需要一条子线程；建议值也不能提升运行环境已经设置的额度。
+该值表示主会话之外最多两条子线程，不是两个 custom agent 定义。串行 staged pair 只需要一条子线程；本次使用量低于已有项目容量不构成降低持久上限的理由，在计划/guardrails 中限制本次使用量即可。建议值也不能提升运行环境已经设置的额度。
 
 ## `.codex/agents/<name>.toml`
 

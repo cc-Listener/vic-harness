@@ -13,6 +13,10 @@
 
 会自行委派的 skill（如可用时的 Matt `code-review`、`implement-spec` 或实际发现的同类实现 skill）计入 `skills.available`，记录它已覆盖的职责和证据面；名称存在不能代替读取当前说明。复用其审查能力，不再为同一证据面新增 reviewer。
 
+`available` 的关键能力须有可定位的当前工具接口、宿主能力声明或已成功读取的当前能力说明等证据，并说明适用角色/范围。目标角色、安装线索、配置文件或计划本身不足以证明当前可调用；只有规划而无能力证据时放入 `missing_but_relevant`，说明未确认；确有添加计划才用 `planned_additions`。
+
+分别表达当前可用、本次允许调用、已经启动、权限已验证；可调用但未启动仍可列为 `available`，不把未运行推断为不可用，也不把可调用推断为已获本次授权或权限隔离。不得为本技能盘点擅自 spawn 或进行 runtime 验证；需要真实权限验证的后续任务仅作为待验证条件。
+
 对关键能力写明发现来源和不确定性。模型可用性及继承规则见 [model-policy.md](model-policy.md)。
 
 这里的 `runtimes` 只描述代理执行与上下文边界；Python、Node 等解释器作为本地工具能力记录，不混入 `runtime_class`。

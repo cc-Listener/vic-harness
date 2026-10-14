@@ -2,6 +2,8 @@
 
 核验日期：2026-10-14。用户指定的模型优先于“最新”推荐，已有合理分工和成本目标优先于统一换成旗舰。
 
+本地快照的核验日期属于该快照，不代表本轮访问官方页面。摘要 `checked_at` 只填本轮实际官方核验日期；未核验时用 null。`official_sources` 只列本轮实际核验的官方 URL；成功读取的本地快照路径、快照日期、保留已有配置的依据及未核验项写入 rationale/uncertainty，不以运行当天冒充核验。
+
 ## 选择流程
 
 1. 快照超过 45 天时先提醒重新核验；用户要求“最新”或升级时，先搜索并打开 [Codex 模型](https://learn.chatgpt.com/docs/models) 和 [subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)，再读取本地配置。API 模型目录不能单独证明 Codex 账户可用性。

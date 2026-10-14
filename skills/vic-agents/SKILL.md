@@ -18,6 +18,8 @@ description: 仅在用户明确要求评估或配置 Codex 子代理、更新代
 
 ## 工作流
 
+结论前必读四份核心引用正文：能力盘点、决策规则、模型策略、落地格式。步骤 2 成功读取前两份才作能力/方案判断，步骤 3 成功读取模型策略才作模型结论，步骤 4 成功读取落地格式才作持久变更结论；交付前四份均须读完。路径列表、读取命令已发出或示例不能替代成功读取正文。读取失败时说明缺口，停止依赖该材料的写入结论，继续独立可完成的只读工作。
+
 ### 1. 收集事实和生效指导
 
 优先读取存在时的 `contracts/project-context.yaml`，以及目标仓库已有 `.codex/config.toml`、相关角色 TOML 和当前会话能力。合同缺失不阻塞配置，可用仓库扫描。
@@ -38,7 +40,7 @@ description: 仅在用户明确要求评估或配置 Codex 子代理、更新代
 
 分别描述主会话、计划委派的子代理与需要持久化的 custom agent。摘要 `active_agents` 是计划，不表示运行；`use_multi_agent` 描述目标工作流，配置编辑尚未启动用 `delegation.execution_status: not-started` 表达。
 
-完成条件：给出 single-agent 基线、条件增强方案及每个新增角色的独立范围、输入、可检查输出和收益；无配置收益选择零新增文件。
+完成条件：给出 single-agent 基线、条件增强方案及每个新增角色的独立范围、输入、可检查输出和收益；本次使用量低于项目并发容量不是降低全局上限的理由，每项持久变更须有独立配置收益；无配置收益选择零新增文件。
 
 ### 3. 选择模型与角色约束
 
@@ -56,6 +58,7 @@ description: 仅在用户明确要求评估或配置 Codex 子代理、更新代
 
 - 仅在确需全局调整时修改 `.codex/config.toml`；仅为持久职责维护 `.codex/agents/<name>.toml`，它不改变主会话角色。
 - standalone 必填 `name`、`description`、`developer_instructions`；其余仅生成当前支持且本次必要的字段。
+- 合法旧别名不因 warning 自动迁移；纯别名迁移保持数值，数值变更另须项目级依据。
 - 保留无关设置、注释、合法旧注册、未知历史字段与凭证引用；同名角色先核对用途及用户指导，避免覆盖 built-in 或重复注册。
 - 平行层先逐文件给出“转为 TOML / 退役 / 保留为人类文档”的具体方案与引用影响，授权覆盖后执行；未确认的方案只报告，继续其他工作。
 - superpowers 保持 user-confirmed / user-denied / unknown；确认集成或明确要求 bridge 后才考虑 `.codex/AGENTS.md`。unknown 时跳过；根任务需要显式读取入口并遵守 override 优先级。
@@ -72,6 +75,6 @@ description: 仅在用户明确要求评估或配置 Codex 子代理、更新代
 
 回复用简体中文，字段、路径、模型名和必要术语保留原文。按 [YAML 摘要](references/output-schema.yaml) 保留本次判断、能力、最小/增强方案、evaluation、evidence_requirements、guardrails、模型、delegation、bridge 与实际工件清单。仅必要风险设置 human_checkpoints，已有授权直接记录。
 
-`initialized_project`、`initialization_required`、`ready_for_multi_agent`、`use_multi_agent` 等判断只在回复中；不回写合同。摘要默认不保存为仓库 manifest。列清创建、修改、保留、待处理文件及未验证项，核验日期只填实际完成的核验。
+`initialized_project`、`initialization_required`、`ready_for_multi_agent`、`use_multi_agent` 等判断只在回复中；不回写合同。摘要默认不保存为仓库 manifest。列清创建、修改、保留、待处理文件及未验证项，核验日期只填实际完成的核验。核对来源正文确实读取；本地快照日期/路径与本轮官方页面核验日期/URL分别说明，不能用运行当天或快照日期冒充本轮核验。写入拒绝后保留现场，停止该写分支，不换路径或工具规避拒绝；继续独立只读工作，只报告有证据的动作、拒绝和实际差异。文件未变不证明主动 no-op，回合完成不证明配置成功。
 
 完成条件：报告与实际差异、检查结果一致，所有必保留摘要字段齐全；有未通过检查时明确失败，不宣称完成验证。示例见 [三种场景](references/examples.md)，官方行为说明见 [工程依据](references/engineering-notes.md)。

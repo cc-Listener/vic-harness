@@ -316,3 +316,21 @@ FINAL_STATIC=PASS
 - 副本完整文件树与权限无变化，原仓库 322 个文件的 hash/权限、HEAD 与 Git 状态均不变。本次不是成功 no-op 或完整技能验收；bootstrap 尚未运行。独立诊断进行中，不通过放宽权限或手修产物消除失败。
 - 原始证据保存在 ignored `M1-real-trial/agents-20261014T090700Z-139b9681/`；准备证据为 `M1-real-repo-preparation.md`。技术试用不替代 T12 重复评测、原生 loader 验证、业务回归或人工体验。
 - 独立诊断：现有项目并发容量 2 与本次使用最多 1 条不冲突；合法旧别名 warning 不是必须迁移的理由。新上下文正补强持久变更收益、决策前引用读取及能力证据门槛；不要求为证明能力而实际派生代理。原静态迁移结论保留，修复及复审完成前本票暂回进行中。
+
+### 2026-10-14 T06 真实试用通用规则修复（待限定复审）
+- 基线：`1e71be7912080cb7069b534921dd56132d27986b`；原实现 `40c1923`。仅修改 vic-agents 的8份文本；主体80行。T06 保持🟡，等待独立限定复审；真实行为验收仍未通过，不追认原试用为成功no-op。
+- 改动：任务使用预算与项目持久容量分离，每项持久改动独立说明收益；合法别名不因warning自动迁移，纯迁移保留数值。四份核心引用正文成功读取设为分阶段结论门槛，失败只停止依赖材料的写入结论；本地快照路径/日期与本轮官方URL/核验日期分开。available须有当前工具/宿主声明等可定位证据；可用/允许/已启动/权限验证分开，缺证据不冒充可用，不为盘点spawn。写入拒绝停止分支，不换路径/工具规避，仅报告有证据动作及实际差异。
+- 实际验证：`rtk proxy node .superpowers/sdd/07-roadmap/t06-real-fix-verify.mjs` exit0；复用内置解析器，11文件、24本地链接、24顶层字段、111非null结构节点兼容，三段示例TOML解析通过，五组临时仓库checker均实际执行并逐字节/mode比较不变，finally清理。静态没有RTK产品运行依赖；所有本地执行仍使用rtk前缀。验证脚本及完整报告留在ignored目录。
+
+```json
+{"static":"PASS","files":11,"lines":80,"links":24,"top_keys":24,"recursive_shape_nodes":111,"toml_examples":3,"new_rules":"PASS","rtk_runtime_dependency":false}
+{"scenario":"f5","exit":0,"summary":{"error":0,"warn":0},"ids":[],"input_bytes_modes_preserved":true}
+{"scenario":"f6","exit":0,"summary":{"error":0,"warn":0},"ids":[],"input_bytes_modes_preserved":true}
+{"scenario":"ultra","exit":0,"summary":{"error":0,"warn":0},"ids":[],"input_bytes_modes_preserved":true}
+{"scenario":"legacy","exit":0,"summary":{"error":0,"warn":3},"ids":["A03","A04","A06"],"input_bytes_modes_preserved":true}
+{"scenario":"unknown","exit":1,"summary":{"error":1,"warn":0},"ids":["A07"],"input_bytes_modes_preserved":true}
+TEMP_FIXTURES_CLEANED=true
+```
+
+- 其他实际验证：`rtk git diff --check -- skills/vic-agents` exit0；插件根 `rtk proxy node scripts/vic-check.mjs --agents --root . --json` exit0，error0/warn0，只证明空配置基线。初版验证脚本两次因节点计数口径错误失败，修正脚本后完整成功；产品结构未改变。
+- 边界与交接：未改checker/ADR/reference原件或试用附件，未写业务仓库、启动模型回合/代理、调整权限或安装依赖；已有授权/零写边界保留。真实模型行为、账户可用性、loader及权限仍未重新验证；限定复审只审通用文本与确定性证据，不能据此宣布真实行为通过。报告 `.superpowers/sdd/07-roadmap/T06-real-fix-report.md`。
