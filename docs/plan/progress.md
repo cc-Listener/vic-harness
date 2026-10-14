@@ -11,9 +11,9 @@
 | T02 | 合同 schema v2 | M1 | ✅ | 2026-10-14 | 标准 JSON Schema 小子集；58 个 v1 业务路径、163 个项目示例路径验收通过；独立审查可合入 |
 | T03 | vic-check：解析与合同规则 | M1 | ✅ | 2026-10-14 | 六条规则与 CLI；R1 应用文档漏扫已修；Node 18/当前 Node 23 tests 通过，示例 0 error；独立复审可合入 |
 | T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 四夹具与两基线断言器；R1 特殊文件名漏报已修；Node 18/当前 Node 51 项通过；独立复审可合入 |
-| T05 | vic-bootstrap v2 | M1 | ⬜ | | |
+| T05 | vic-bootstrap v2 | M1 | 🟡 | | 正在迁移 M1 技能与逐项验收；真实模型评测等待检查器稳定窗口 |
 | T06 | vic-agents v2 | M1 | ⬜ | | |
-| T07 | vic-check：代理配置规则 | M1 | ⬜ | | |
+| T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过，1551 文件只读检查 322ms；独立审查待定 |
 | T08 | vic-router 与 vic-check skill 文本 | M1 | ⬜ | | |
 | T09 | 评测运行器 | M1 | ⬜ | | |
 | — | 🚩 发布 v0.1.0 | M1 | ⬜ | | |
@@ -46,6 +46,8 @@
 | 2026-10-14 | 协调 / T00 | 路线图要求 GitHub 仓库，HANDOFF 把远端创建列为可选。 | 使用现有规划目录作为本地仓库，分支 `feat/vic-harness`，基线 `a9e0e08`；远端创建与发布单独记录。 | 按 HANDOFF 的可选项处理。 |
 | 2026-10-14 | 规划审查 / T11–T12 | ADR-0006 的 agents 每次日志与 f5 真正零写冲突。 | `vic-agents` 真正 no-op 不追加日志、不创建 contracts；有配置变更才按允许字段记录。其他 skill 的日志规则不受此例外影响。 | 用户明确选择“真正零改动：no-op 不写日志”，作为本次实现与验收的最高优先级依据。 |
 | 2026-10-14 | T02 / 协调裁定 | v1 `version` 与新 `schema_version` 并存时的语义，旧参考混合规则元数据，以及 agents 日志审计字段尚未明确。 | 根合同保留 `version:1` 兼容标记，`schema_version:2` 为格式权威；旧 `fields/description/allowed_values` 不算业务字段，`role/value` 保持原形。日志最小可选审计字段为 `models_checked_at/agent_fields_checked_at/source_urls`；agents 真正 no-op 零写入。 | 按协调明确技术裁定执行；说明写入 `schemas/MIGRATIONS.md`。 |
+| 2026-10-14 | T07 / 协调裁定 | ADR-0002 称 smol-toml 为 MIT，但官方稳定版 1.9.1 实际是 BSD-3-Clause。 | 内置官方单文件 bundle，保留真实完整 BSD 版权、条件与免责声明；记录版本、完整性及原 bundle/最终文件 SHA256。 | 按真实许可证执行，ADR 原件不改。 |
+| 2026-10-14 | T07 / 协调裁定 | 合法旧注册 config_file 引用的无 name 片段若一律按 standalone 会被误报缺 name/description，引用自身也会被误判重复。 | 被旧注册引用且无 name 的 TOML 按旧片段，不套 A02；有 name 或未注册的 agents 直属 TOML 按 standalone。A05 只报同一角色身份双定义；缺失/越界引用安全报 A01。 | 保留旧注册与无关配置，分类解释覆盖测试与本票记录。 |
 
 ## 本轮执行约定
 
@@ -216,3 +218,15 @@ T04_VERIFIED=33
 - 性能/只读：Node18 临时仓库含 250 份 app-local 文档、1200 源码、根/子合同与组件导航文档共 1455 文件，执行完整 CLI（计入启动，准备不计时）；原始输出 `{"node":"v18.20.8","files":1455,"elapsed_ms":103.34,"exit":0,"summary":{"error":0,"warn":0},"unchanged":true}`。前后全部目录清单与逐文件 SHA256 相同，临时夹具已清理。
 - `rtk git diff --check` exit 0。仅本票 scripts/tests/progress 改动；未改 schema/evals/规划/ADR，未启动子代理，未 push/发布。R1 已修，待新上下文独立复审；原报告其他边界与后续票分工保持有效，详见 ignored T03-report.md 追加证据。
 - 独立复审：`review_t03` 结论“R1 已解决，可合入”，修复差异无新必须修改项。实际重跑两套 Node 各 23/23；原漏报探针现在 exit 1 且准确报告 C04/C06；越界软链和目录去重保护通过。Node18 新建 1455 文件探针约 96ms，前后内容不变。实现 `d5ae496`，修复 `6b43e48`，完整证据见 ignored `T03-review-r1.md`。
+
+### 2026-10-14 T07 vic-check：代理配置规则
+- 做了什么：新增结构化 TOML A01–A07；`--agents` 仅检查代理配置，默认/`--all` 合并 A/C，`--contract` 保留合同规则。A03 只检查 agents 全局字段，角色注册子表与旧 alias 单独处理；max_depth 保持 V1/V2 兼容 warn。A07 递归检查解析键，正文/注释中的摘要词不违规。旧注册 config_file 以主 config 所在目录为相对基准，读取前检查仓库和真实软链边界；无 name 的被注册片段不套 standalone schema，A05 不将旧注册引用自身误报成重复。
+- 产出文件：`scripts/lib/{agents.mjs,agents-fields.json,checker.mjs}`、`scripts/vendor/{smol-toml.mjs,README.md}`、`scripts/vic-check.mjs`、`tests/{agents,cli}.test.mjs`、本进度文件。ignored `T07-preparation.md`/`T07-report.md` 保存准备与实施证据；未改 schema/evals/ADR/reference 或 T05 技能文件。
+- TOML parser：smol-toml 官方稳定 1.9.1，2026-10-09 发布，BSD-3-Clause 完整许可证保留于文件头；零上游 npm dependencies。直接使用官方 `dist/index.cjs` 完整单文件 bundle，只加最薄 ESM exports 适配；官方 npm tarball SHA512 integrity 实际校验通过。tarball SHA256=`4ac8392f1918c22a4366be19047cf53aa42646077d4c711b2ef73263beefb172`，原 bundle=`f9029370259e9a43a2f3e64fa1d39e72f3598188380ace83a0abb8261fa33555`，最终 ESM=`b3e2376169f18d0e87506553f6a183e29df3f090f5cfa51af509279346ae4cb6`；全部来源与完整性见 vendor README。
+- 字段快照：checked_at=2026-10-14，依据同日 `agent-fields-research.md` 官方核验；保存五个已核验字段、max_threads 旧别名和 max_depth 的 V2 忽略说明。官方来源为 `https://learn.chatgpt.com/docs/config-file/config-reference`、`https://learn.chatgpt.com/docs/config-schema.json`、`https://learn.chatgpt.com/docs/agent-configuration/subagents`。
+- 先失败后通过：`rtk proxy node --test tests/agents.test.mjs` 在实现前 → tests 15 / pass 0 / fail 15，合法用例退出码实际 2（--agents 未实现），预期 0；实际结构违规尚无 A findings。实现后每条 A 规则至少一正一反用例全部通过，含每个 required/禁用 key、max_threads 同值双声明、旧片段自引用/真正双定义、quoted/dotted/inline/array table、注册路径缺失/目录/越界/外部软链、只读字节保留、范围隔离/互斥。
+- 验证命令与原始关键输出：`rtk proxy node --test`（v25.8.1）→ tests 38 / pass 38 / fail 0 / duration_ms 3330.43625；`rtk proxy <T03-node18.txt 的 NODE_PATH> --test`（v18.20.8）→ tests 38 / pass 38 / fail 0 / duration_ms 3426.217792；既有 C 规则、完整 example 与 CLI 回归均通过。Node18 ESM 探针实际输出 `{"node":"v18.20.8","namedApi":true,"roundTrip":true,"invalidRejected":true,"int64":"9223372036854775807","sha256":"b3e2376169f18d0e87506553f6a183e29df3f090f5cfa51af509279346ae4cb6"}`。
+- 集成与性能：`rtk proxy node evals/verify-fixtures.mjs` → exit 0、`T04_VERIFIED=51`（确定性夹具回归，不是 LLM 评测）。Node18 对 100 角色 TOML、250 文档、1200 源码及主配置的 1551 文件仓库运行 `--all --json`（计入进程启动）→ `{"node":"v18.20.8","files":1551,"elapsed_ms":322.05,"exit":0,"summary":{"error":0,"warn":0},"unchanged":true}`；前后全文件 SHA256 一致，临时夹具已清理。
+- 其他验证：`rtk git diff --check` exit 0；内置 parser 无外部 import/require；产出没有新增 npm 运行时依赖、软链或用户绝对路径。Node18 复用 T03 已校验官方二进制，由主协调最后清理。
+- 未完成 / 遗留：官方 loader 实际角色加载、账号模型可用性不在本票确定性规则验收范围；未执行 LLM 回合。45 天字段保鲜 CI 留 T21，`--drift` 与后续 C 规则仍未实现。独立审查待协调派发。
+- 给下个会话的提示：T06 可实际执行 `--agents`；保留已有合法旧注册与无 name 片段，正文表达权限意图并不建立运行时隔离；不要把 max_depth 兼容警告升级成所有版本无效。T05 的技能改动仍属于并行独立任务，本票未暂存其文件。

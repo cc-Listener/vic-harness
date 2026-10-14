@@ -7,12 +7,12 @@ function parseArguments(args) {
   let selected = false;
   for (let index = 0; index < args.length; index++) {
     const flag = args[index];
-    if (['--all', '--contract'].includes(flag)) {
+    if (['--all', '--contract', '--agents'].includes(flag)) {
       if (selected) throw new Error('只能选择一个检查范围');
       selected = true;
       options.mode = flag.slice(2);
-    } else if (['--agents', '--drift'].includes(flag)) {
-      throw new Error(`${flag} 尚未实现，分别由 T07 / T10 补齐`);
+    } else if (flag === '--drift') {
+      throw new Error(`${flag} 尚未实现，由 T10 补齐`);
     } else if (['--json', '--quiet', '--strict'].includes(flag)) {
       options[flag.slice(2)] = true;
     } else if (flag === '--root') {

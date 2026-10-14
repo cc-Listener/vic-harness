@@ -6,6 +6,7 @@ import { contractSemantics, contractPaths } from './contracts.mjs';
 import { Repository } from './paths.mjs';
 import { documentChecks, absolutePathChecks } from './documents.mjs';
 import { componentDocuments, componentChecks } from './components.mjs';
+import { agentChecks } from './agents.mjs';
 
 async function exists(path) {
   try { await access(path); return true; }
@@ -19,6 +20,7 @@ export async function checkRepository(root, options = {}) {
   const initialized = await exists(join(root, 'contracts')) || await exists(join(root, '.codex'));
   const findings = [];
   if (!initialized) return { initialized, findings };
+  if (options.mode === 'agents') return { initialized, findings: await agentChecks(repo) };
   const schema = parseYaml(await readFile(new URL('../../schemas/project-context.schema.yaml', import.meta.url), 'utf8'));
   assertSupportedSchema(schema);
   for (const directory of ['contracts', 'docs', '.codex']) {
@@ -86,5 +88,6 @@ export async function checkRepository(root, options = {}) {
   const scanned = new Set([...contractFiles, ...files, ...docs, ...configs, ...documentFiles]);
   findings.push(...await absolutePathChecks([...scanned].sort(), repo, pluginRepository, records));
   findings.push(...await componentChecks(components, repo));
+  if (options.mode !== 'contract') findings.push(...await agentChecks(repo));
   return { initialized, findings };
 }

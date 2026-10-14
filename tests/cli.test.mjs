@@ -51,7 +51,7 @@ test('默认 --all 与 --contract 等价；JSON 是唯一对象，quiet 只输�
 
 test('参数、检查范围和根路径错误使用退出码 2，并保持 JSON 可解析', async t => {
   const root = await fixture(t);
-  for (const args of [['--unknown'], ['--all', '--contract'], ['--agents'], ['--drift'], ['--root'], ['--root', 'missing-directory']]) {
+  for (const args of [['--unknown'], ['--all', '--contract'], ['--all', '--agents'], ['--drift'], ['--root'], ['--root', 'missing-directory']]) {
     const result = invoke(root, '--json', ...args);
     assert.equal(result.status, 2, result.stdout);
     assert.equal(result.stderr, '');
