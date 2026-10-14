@@ -667,3 +667,11 @@ Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
 - 独审结论为**当前不可发布**：f3固定技术门失败、上述既定交付/协议/写范围P2及人工正常使用体验均未闭合。通用语义分类器、任意漏报自动发现和OS强隔离可另票；不能把本次已经观察到的规则偏差整体推给M2。真实apple-tools既有受限试用与agents问题继续保留，不代签人工体验、不打tag、不push、不启动T10。
 - fresh归档上下文新增 [第二系列incident](../harness/incidents/2026-10-14-m1-second-bootstrap.md)，旧incident不改。ignored完整依据为 `M1-second-validation-report.md`、`M1-second-review.md`、`M1-second-semantic-diagnosis.md`、`M1-second-evidence/final-evidence-manifest.json` 与独审附件；正式incident可独立理解，不依赖本地附件才能了解问题。
 - 下一步只先实施已有直接反例的输入/范围反馈修复：缺输入非成功、显式空数组合法、披露实际检查及未验证范围。它不解决通用语义、遗漏事实、漏执行或写范围遵循；剩余发布前事项继续open，须另有具体处置与真实验证。当前未授权第三系列或改变旧评分，不以追加抽样代替修复。
+
+### 2026-10-14 T05 M1 输入与检查范围协议修复独审通过
+
+- 仅改 coverage helper、其 reference 与直接测试。API/CLI 强制显式 sources/facts 两数组；无 stdin、缺键、非数组、null 或数组顶层返回 incomplete/error、scope:null，CLI exit1。显式双空数组合法。输入校验先于合同读取；非法输入不声称检查成功，未知合同加合法输入仍 restricted、零写入。
+- 正常 scope 记录 submitted/scanned 源码路径、每 owner 四类显式事实投影次数、实际 automaticVG 数量、子层 PA 与根定义重复核对数量；常驻 limitations 披露语义分类、未提交观察与组件文档语义未验证。未更改发现算法、分类、路径保护、CLI 别名或纯导入逻辑。
+- 实现者及独立审查者分别实际执行 `rtk proxy node --test tests/bootstrap-coverage.test.mjs` 和共享 Node18 的同一定向命令，各 **10/10、fail0、skip0、exit0**。独审另从基线脚本复现无 stdin exit0 误绿，核对新 CLI/API 八类缺失输入一致、双空集合、无本地 PA 的单条 LI、低信息 Go、未知合同顺序及禁区/越界/绝对路径/软链拒绝；完整目标树前后相同。协调 `rtk proxy git diff --check` exit0，三文件 diff 与受审附件相符。
+- ignored `T05-M1-input-scope-fix-report.md`、`T05-M1-input-scope-fix-review.md` 及原始探针记录保留。独审无阻断，可合入本窄补丁；**T05 仍🟡、M1 当前不可发布**。未执行模型、安装或 live 默认全套，也未改变旧评分。漏调用/漏提交事实、普通入口分类、人读机器一致性、entry_chain 与目标外 scratch 仍 open，不能据此声称行为成功率改善。
+- 后续仅追加直接 stdin 生成器示例的窄实现与独立验证；第三系列先准备，须两项补丁独审完成、最终新 SHA 及完整条件固定后由协调放行，当前尚未执行。

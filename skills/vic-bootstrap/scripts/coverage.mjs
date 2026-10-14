@@ -5,6 +5,11 @@ import { load } from '../../../scripts/vendor/js-yaml.mjs';
 
 // 内部只读反馈；输入仅在 stdin/内存中存在，不构成合同字段。
 export async function checkCoverage(root, input = {}) {
+  if (!input || typeof input !== 'object' || Array.isArray(input) ||
+      !Object.hasOwn(input, 'sources') || !Object.hasOwn(input, 'facts') ||
+      !Array.isArray(input.sources) || !Array.isArray(input.facts)) {
+    return { status: 'incomplete', error: '输入未完整提交：sources 与 facts 必须显式提供数组；合法空集合请使用 []。', findings: [], checked: [], scope: null };
+  }
   root = resolve(root);
   async function read(path) {
     if (typeof path !== 'string' || !path || path.includes('\\') || /^(?:\/|[A-Za-z]:)/.test(path)) throw Error('非法相对路径');
@@ -39,6 +44,12 @@ export async function checkCoverage(root, input = {}) {
   const fields = { GP: ['project_map','guarded_paths'], VG: ['conventions','validation_gates'], PA: ['component_contract','preferred_abstractions'], LI: ['component_contract','locate_index'] };
   const entries = (l,k) => l.value[fields[k][0]]?.[fields[k][1]] || [];
   const command = s => String(s || '').replace(/^rtk (?:proxy )?/, '').replace(/\bnpm (test|start)\b/g, 'npm run $1').replace(/\bpnpm run /g, 'pnpm ').trim();
+  const scope = {
+    sources: { submitted: [...input.sources], scanned: [] },
+    factProjections: layers.map(l => ({ owner: l.file, counts: { GP: 0, VG: 0, PA: 0, LI: 0 } })),
+    automaticVG: layers.map(l => ({ owner: l.file, count: 0 })),
+    paDuplicateChecks: layers.map(l => ({ owner: l.file, count: l.path ? entries(l,'PA').length : 0, rootDefinitions: entries(layers[0],'PA').length }))
+  };
   for (const layer of layers) {
     for (const pa of entries(layer,'PA')) {
       if (layer.path && entries(layers[0],'PA').some(p => p.source === pa.source && p.entry === pa.entry && p.import === pa.import && JSON.stringify(p.exports) === JSON.stringify(pa.exports))) add('gap',layer.file,pa.source,'共享 PA 定义重复到子合同；保留应用 LI 使用场景');
@@ -64,12 +75,14 @@ export async function checkCoverage(root, input = {}) {
         }));
         if (!covered) add('gap',layer.file,packagePath,`人读验证入口缺少 VG：${cmd}`);
       }
+      scope.automaticVG.find(s => s.owner === layer.file).count++;
       checked.push({ kind:'VG',owner:layer.file,evidence:packagePath,command:cmd });
     }
   }
   // 源码候选只从调用者给出的已读允许集合取，不递归访问目标禁区。
-  for (const path of input.sources || []) {
+  for (const path of input.sources) {
     const text = await read(path), layer = ownerOf(path);
+    scope.sources.scanned.push(path);
     const risk = /(?:vite|webpack|rollup)\.config\.[cm]?[jt]s$/.test(path) || /\b(?:axios\.create|\w+\.interceptors\.(?:request|response)\.use)\s*\(/.test(text) || /(?:sessionStorage|localStorage)\.getItem[\s\S]*<(?:Navigate|Redirect)\b/.test(text);
     if (risk && !entries(layer,'GP').some(g => g.path === path)) add('review',layer.file,path,'风险候选缺少具体 GP；回读配置/调用语义，确认后定向补齐或说明排除依据');
     if (/\baxios\.create\s*\(|\.interceptors\.(?:request|response)\.use\s*\(/.test(text)) {
@@ -77,7 +90,7 @@ export async function checkCoverage(root, input = {}) {
     }
   }
   // 已核实的语义事实逐字段检查，允许事实集合覆盖有限扫描之外的语言/命令。
-  for (const fact of input.facts || []) {
+  for (const fact of input.facts) {
     if (!fields[fact.kind]) throw Error('未知覆盖事实类型');
     if (!fact.evidence?.length || !fact.values || !Object.keys(fact.values).length) throw Error('已核实事实必须包含证据及待核对字段');
     const layer = layers.find(l => l.file === fact.owner);
@@ -85,9 +98,10 @@ export async function checkCoverage(root, input = {}) {
     for (const path of fact.evidence || []) await read(path.replace(/:\d+(?:-\d+)?$/, ''));
     const matches = entries(layer,fact.kind).some(item => Object.entries(fact.values || {}).every(([key,value]) => key === 'command' ? command(item.command || item.command_hint) === command(value) : JSON.stringify(item[key]) === JSON.stringify(value)));
     if (!matches) add('gap',layer.file,fact.evidence,'已核实事实缺少准确机器投影：'+fact.kind);
+    scope.factProjections.find(s => s.owner === layer.file).counts[fact.kind]++;
     checked.push(fact);
   }
-  return { status: findings.length ? 'incomplete' : 'covered-within-scope', findings, checked, limitations: ['有限命令与源码模式；review 需回读裁定，不自动生成 GP/PA/LI。未输入的观察事实、一般语义与人读准确性仍须双向人工核对。'] };
+  return { status: findings.length ? 'incomplete' : 'covered-within-scope', findings, checked, scope, limitations: ['有限命令与源码模式；review 需回读裁定，不自动生成 GP/PA/LI。未验证事实语义分类、未提交观察集合与组件文档语义；零计数表示该类显式投影未执行，不证明该类不存在。即使已有投影匹配，也不能证明剩余观察完整；仍须双向人工核对。'] };
 }
 
 // Node 模块 URL 已解析系统路径别名；argv 需使用同一规范路径。stdin/eval 导入没有常规入口。
