@@ -15,7 +15,7 @@
 | T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 静态迁移与两次限定修复均独立通过；真实试用主动no-op/完整摘要已验证，仍有3项已披露输出缺陷移交T12，完整行为未通过 |
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
 | T08 | vic-router 与 vic-check skill 文本 | M1 | ✅ | 2026-10-14 | 11场景及fallback完整；独立27测试/CLI探针通过，RTK依赖R1修复与Node-only限定复审通过 |
-| T09 | 评测运行器 | M1 | 🟡 | | 旧绑定真实f1两轮通过；完整独审R1/R2已限定修复，两Node回归通过，待限定复审 |
+| T09 | 评测运行器 | M1 | ✅ | 2026-10-14 | 真实f1旧绑定两轮L2通过；完整独审及超时/路径别名修复复审通过，双Node10/10；最终源码LLM另待M1 |
 | — | 🚩 发布 v0.1.0 | M1 | ⬜ | | |
 | T10 | 来源字段与过期检测 | M2 | ⬜ | | |
 | T11 | refresh-log | M2 | ⬜ | | |
@@ -569,3 +569,11 @@ Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
 
 - 核对旧真实binding：run.sh相同；run/config/events/files原有差异仍保留，本修复后process也不同。技能、fixture、expected、checker/assertion未动。修复后源码没有新真实模型执行，旧真实两轮结果仅证明旧binding执行；限定确定性回归不替代M1规定系列、native loader或副作用审计。
 - ignored `T09-fix-report.md`、`T09-fix-binding.json`、`T09-fix-before.txt`、`T09-fix-old-grandchild.txt`、`T09-fix-node18.txt`记录原输出和哈希。T09仍🟡待限定复审；无新依赖、绝对用户路径、规划/ADR/reference变更、push或发布。
+
+### 2026-10-14 T09 独立完整审查与修复复审完成
+
+- 完整审查a577c34独立验证当前Node48/48、Node18机制8/8、完整无模型失败CLI repeat2、真实冻结树首轮29/0/1与二轮30/0/0及checker0error；发现R1/P1进程组清理、R2/P2系统路径别名两个必修。fresh修复185139e只改run/process/必要测试及progress。
+- 独立限定复审双Node10/10，真实操作系统SIGINT/SIGTERM及timeout六场景均等待组清理且顽固孙进程消失，普通完成约0.05–0.06秒不额外等待；系统已有别名run.sh help0、无codex1、mock repeat2为1，2唯一结果/2CSV行且tokens空。旧22份附件hash全部一致，未追加模型。
+- R1/R2均ADDRESSED，spec/质量通过，T09可完成。真实后来源差异仍披露：仅run.sh与旧真实binding相同，另外五runtime不同；旧真实执行加最终确定性复核足够本票，不宣称最终源码已真实执行，不计M1三次。完整证据在ignored T09-review.md、T09-fix-report.md、T09-fix-review.md。
+- 非阻塞P3：通过stdin的 `node --input-type=module -` 导入run.mjs时realpath('-')报ENOENT，文件脚本导入/公开run.sh正常；后续若需此非公开模块复用再处理。进程组清理不承诺回收主动脱离组的进程，副作用不自动审计。
+- T01–T09已完成独立票审，M1工程文档收尾及最终同源三次评测、安装发现、独立里程碑审查仍待执行；未打tag、未发布。
