@@ -29,7 +29,7 @@
 | T18 | 晋升机制 | M3 | ⬜ | | |
 | T19 | marketplace 集成外部插件 | M3 | ⬜ | | |
 | T20 | Claude Code 兼容（可选） | M3 | ⬜ | | |
-| T21 | 插件自身的保鲜 CI | M3 | 🟡 | | 显式依赖T07已完成，提前实现独立本地CI；无远端，真实PR运行待验，不代表M3完成 |
+| T21 | 插件自身的保鲜 CI | M3 | 🟡 | | 本地实现及R1独立复审通过；Node18默认45/45、helper5/5，strict仅未初始化命令通过；无远端，真实GitHub PR验收待验，不代表M3完成 |
 | — | 🚩 发布 v0.3.0 | M3 | ⬜ | | |
 
 ## 规划问题
@@ -423,3 +423,12 @@ OUTPUT_SCHEMA_ALL_PARSED_VALUES_UNCHANGED=true
 - 新候选主技能 SHA256 为 `cb6236147100c95c2f4bc4ce1dd71f19f1b3926a8f077a3b449cb2051d209e30`。只改主技能及四份references，openai策略原字节不变；新主文件48行、21本地链接。实现报告和完整对旧冻结源差异为 `T05-convergence-report.md` / `T05-convergence.diff`。
 - 独立复审 `T05-convergence-review.md`：规范与质量均通过，无必须修改项，可进入新源行为评测。审查者实际核对六文件哈希、metadata及三份共享YAML、所有本地链接、迁移/兼容/权限/M1边界；25份冻结非技能接口/评测文件未变，重建完整diff与报告diff逐字节一致。
 - 静态准入不证明行为修复。新评测固定请求 `gpt-6.1-sol` / `low`，实际服务端模型未确认时仍记未知。与旧默认条件不明的样本分开，不作单变量因果归因；所有新源评测也保持实际产物与命令审计，不手工补齐模型输出。
+
+### 2026-10-14 T21 插件保鲜 CI 与发布判据修复
+
+- 产出：`.github/workflows/freshness.yml`、`.github/scripts/freshness.mjs`、`.github/scripts/freshness.test.mjs`；PR触发、只读权限、完整历史与Node18，执行默认测试、strict插件自身检查和版本/日期规则，失败退出传播。核验日期按UTC计算，45天不warn、46天warn；缺失/无效/未来均warn。
+- 发布判据按协调裁定：开发号预置不算发布，首次0.1.0及提前升好的开发号允许同号转正式；manifest匹配最新标题，新发布对应当前版本；已发布版本不得复用，base已发布标题保留且不能降级，正文可修订。只依据current/base可验证CHANGELOG记录，不推断外部release，不改规划/ADR/manifest/CHANGELOG绕过。
+- 实际验证：实施者以62aa239干净archive加本票三文件、独立复审以85f1e50干净archive加同字节三文件，Node v18.20.8默认 `node --test` 均45/45，显式helper测试5/5；`node scripts/vic-check.mjs --strict --root .` exit0、输出“vic-harness：未初始化”，只证明命令执行，不声称不存在的合同通过校验。未复制T05未提交内容或ignored评测副本。
+- 隔离Git基线实际CLI：普通开发、首次同号发布、预置号转正式和历史说明修订exit0；版本不一致、复用已发布号、删除/降级历史exit1。独立复审另验新发布不在最新条目失败、正常下一新版本通过。原R1误拒已解决，限定复审“本地代码可合入，无新增必须修改项”。
+- 报告及原始命令/退出码/stdout/stderr在ignored `T21-fix-report.md`、`T21-fix.diff`、`T21-fix-evidence/run.txt`、`T21-fix-review.md`及独立raw证据保留。`git diff --check`通过。
+- 真实GitHub PR验收待验：尚无远端PR，checkout/base SHA、warning显示、job阻断和分支保护未实际验证；T21保持🟡、完成日期留空，不代表M3完成。不push、不发布。

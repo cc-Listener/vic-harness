@@ -1,0 +1,25 @@
+name: 插件保鲜
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: 单元测试
+        run: node --test
+      - name: 插件自身检查
+        run: node scripts/vic-check.mjs --strict --root .
+      - name: 保鲜规则边界测试
+        run: node --test .github/scripts/freshness.test.mjs
+      - name: 发布版本与核验日期
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node .github/scripts/freshness.mjs --base "$BASE_SHA"
