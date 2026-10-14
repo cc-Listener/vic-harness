@@ -6,7 +6,7 @@
 
 | ID | 标题 | 里程碑 | 状态 | 完成日期 | 备注 |
 |---|---|---|---|---|---|
-| T00 | 建仓库并核验未决问题 | M0 | 🟡 | | Q1–Q4、Q9 已写结论；真实隔离插件探针通过，待独立审查 |
+| T00 | 建仓库并核验未决问题 | M0 | ✅ | 2026-10-14 | Q1–Q4、Q9 已写结论；独立审查可合入；完整 LLM 回合留 T09 |
 | T01 | 插件骨架 | M1 | ⬜ | | |
 | T02 | 合同 schema v2 | M1 | ⬜ | | |
 | T03 | vic-check：解析与合同规则 | M1 | ⬜ | | |
@@ -64,6 +64,7 @@ T05、T06 完成时，把 08-v1-migration.md 的勾选结果贴在这里。
 - 验证命令与关键输出：`rtk proxy codex --version` → `codex-cli 0.162.1`；隔离 `plugin marketplace add` / `plugin add` → exit 0；`skills/list` → errors=[]、两个数组目录技能 enabled=true；policy true/false → 隐式条目 present=true/false；SessionStart source=startup；共享脚本 → exit 0、`T00_SHARED_OK`；清理 → `TEMP_ROOT_EXISTS=False`。详细命令与官方来源已记录在 open-questions。
 - 未完成 / 遗留：无认证隔离环境没有完成 LLM 回合，tokens=null，T09 负责真实 L2；GitHub 远端可选且未创建；未发布。T15 的 fail-open 业务用例尚未实现。
 - 给下个会话的提示：T01 用真实骨架重新做隔离 marketplace 安装与六技能发现；采用 skills 字符串，M1 不提前引用尚不存在的 hooks 文件；共享路径从实际 SKILL.md 定位，不能拼接固定缓存路径。
+- 独立审查：`review_t00` 结论“可合入，无必须修改项”；重跑五题结论、CLI 版本/选项、`git diff --check`、Hard stops 检查通过。临时探针已清理，未二次复现；本轮官方打包页面返回 403，审查未把它当作实测证据。实现提交 `572b033`。
 
 每个会话结束时追加一条，供下一个会话接手：
 
