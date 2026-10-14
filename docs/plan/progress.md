@@ -27,7 +27,7 @@
 | — | 🚩 发布 v0.2.0 | M2 | ⬜ | | |
 | T17 | vic-prune | M3 | ⬜ | | |
 | T18 | 晋升机制 | M3 | ⬜ | | |
-| T19 | marketplace 集成外部插件 | M3 | ⬜ | | |
+| T19 | marketplace 集成外部插件 | M3 | 🟡 | | 固定SHA Matt本地接线及独立隔离安装发现通过；原生manifest、vic/Matt启用技能6/27；物理干净机器验收待验，不代表M3完成 |
 | T20 | Claude Code 兼容（可选） | M3 | ⬜ | | |
 | T21 | 插件自身的保鲜 CI | M3 | 🟡 | | 本地实现及R1独立复审通过；Node18默认45/45、helper5/5，strict仅未初始化命令通过；无远端，真实GitHub PR验收待验，不代表M3完成 |
 | — | 🚩 发布 v0.3.0 | M3 | ⬜ | | |
@@ -432,3 +432,13 @@ OUTPUT_SCHEMA_ALL_PARSED_VALUES_UNCHANGED=true
 - 隔离Git基线实际CLI：普通开发、首次同号发布、预置号转正式和历史说明修订exit0；版本不一致、复用已发布号、删除/降级历史exit1。独立复审另验新发布不在最新条目失败、正常下一新版本通过。原R1误拒已解决，限定复审“本地代码可合入，无新增必须修改项”。
 - 报告及原始命令/退出码/stdout/stderr在ignored `T21-fix-report.md`、`T21-fix.diff`、`T21-fix-evidence/run.txt`、`T21-fix-review.md`及独立raw证据保留。`git diff --check`通过。
 - 真实GitHub PR验收待验：尚无远端PR，checkout/base SHA、warning显示、job阻断和分支保护未实际验证；T21保持🟡、完成日期留空，不代表M3完成。不push、不发布。
+
+### 2026-10-14 T19 marketplace 外部 Matt 本地接线
+
+- 产出：仅 `.agents/plugins/marketplace.json` 新增 Matt 外部 Git source，固定 SHA `49dd158d1076134a641b33efb035946536778336`；保留现有 vic 条目和市场语义，不新增 UA，不复制第三方代码、skill 文本或 manifest 到产品。
+- 实施及独立审查均从已提交基线 `c60a81e0c44d3f659d56744a8a02b0a66ebd36da` 的 Git archive 建立工作区外树，仅叠本票 marketplace；对照原始文件确认变化集合唯一，未纳入 T05 未提交内容。独立临时 CODEX_HOME 配置/缓存，未读复制认证、未改全局、未执行业务 skill 或 LLM。
+- 实际命令：`rtk proxy python3 .superpowers/sdd/07-roadmap/T19-verify.py` 与独立 `T19-review-verify.py` 均 exit0；CLI 0.162.1，从本票市场安装 vic 0.1.0 / Matt 1.3.1 均 exit0、installed/enabled=true，Matt 实际 source 返回指定 Git URL 和固定 SHA。缓存保留原生 `.claude-plugin/plugin.json`、27 个显式普通技能文件，无合成 `.codex-plugin/plugin.json`。
+- app-server `skills/list forceReload=true`：errors=[]，按精确 pluginId 分组 vic 6、Matt 27，均 enabled=true；名称集合与各自发布清单一致。54 个宿主技能排除统计；独立审查额外确认技能路径位于对应缓存。只证明接线及加载发现，不证明全部业务技能、自动更新或独立远端 Git 树逐文件字节一致性。
+- 两轮成功验收均两个 remove exit0，最终 installed/available 为空，app-server exit0，TEMP_ROOT_EXISTS=false。实施的两次脚本环境兼容失败原始记录保留，其临时环境也已清理；不清理其他 ticket 证据、不用 git clean。
+- 本地质量与规范独立审查通过，无必须修改项；完整产品 diff、报告及原始证据在 ignored `T19-report.md`、`T19-product.diff`、`T19-evidence.txt`、`T19-review.md` 和独立证据保留。`rtk git diff --check` exit0。
+- 物理干净机器验收仍待验：本轮独立临时 CODEX_HOME 仍可见宿主技能，不能冒充路线图验收。T19 保持🟡、完成日期留空，不代表 M3 发布完成；仅本地提交，不 push、不发布。
