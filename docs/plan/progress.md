@@ -14,7 +14,7 @@
 | T05 | vic-bootstrap v2 | M1 | ✅ | 2026-10-14 | 24188fb完整独立票审通过；四fixture真实两轮/0error/全树no-op复验通过；open P2/P3已归档，M1稳定性未通过 |
 | T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 静态迁移与两次限定修复均独立通过；真实试用主动no-op/完整摘要已验证，仍有3项已披露输出缺陷移交T12，完整行为未通过 |
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
-| T08 | vic-router 与 vic-check skill 文本 | M1 | 🟡 | | R1修复发布示例RTK依赖并通过Node-only复验，🟡待限定复审；未执行真实LLM路由评测 |
+| T08 | vic-router 与 vic-check skill 文本 | M1 | ✅ | 2026-10-14 | 11场景及fallback完整；独立27测试/CLI探针通过，RTK依赖R1修复与Node-only限定复审通过 |
 | T09 | 评测运行器 | M1 | 🟡 | | T04/T05依赖已完成，独立新上下文实施中；固定provider及请求条件 |
 | — | 🚩 发布 v0.1.0 | M1 | ⬜ | | |
 | T10 | 来源字段与过期检测 | M2 | ⬜ | | |
@@ -533,3 +533,9 @@ STANDARD_NODE_EXAMPLE=true; ABSOLUTE_USER_PATH=false; READ_ONLY_BOUNDARY_PRESERV
 - frozen checker前后及模型自身均exit1、132error/3warn，外部JSON逐字节相同；C01=127/C02=4/C06=1，A03=2/A04=1。标准检查未通过，不删自定义扩展强凑绿色。执行成功、受限保护、完整bootstrap和checker结论分别记录。
 - 副本410完整树条目字节/权限/HEAD/status相同；原322tracked字节/权限/HEAD/status以及68407完整树元数据相同，原ignored/未跟踪字节未读取未核验。冻结来源前后hash相同。协调直接核对原始最终回复、保护JSON、前后checker及原事件计数，与报告一致。
 - run_id `bootstrap-20261014T104734Z-3e2286ad`；ignored `M1-bootstrap-trial-report.md`及同目录原始证据保留，正式bootstrap incident追加独立条件/受限范围记录，无新产品保护缺陷归因。没有重试或手修产物。实际后端未知、native loader/人工体验未验，不能据此称M1发布通过。
+
+### 2026-10-14 T08 独立验收与 R1 复审完成
+
+- 实现990297b覆盖11场景、外部未装替代、M1占位/漂移边界及真实checker语义；独立审查重跑27测试全部通过，CLI参数/0-1-2退出和只读探针通过。唯一P2为发布示例无条件RTK依赖，在Node-only环境复现exit127。
+- fresh R1提交1e8fb73仅把示例改标准Node并说明按目标guidance可选包装，开发shell仍RTK。独立限定复审重新从发布代码块运行：NODE_ONLY_RTK_AVAILABLE=False、NODE_ONLY_EXIT=0、READ_ONLY_BYTES_MODES=true、LINK_OK=True、SKILL_LINES=42、TEMP_CLEANED=True；diff检查通过，原P2 ADDRESSED，无新增阻塞，spec/质量通过。
+- 报告ignored T08-review.md、T08-fix-report.md、T08-fix-review.md；T08标完成。未运行router LLM评测或完整f1–f7，本票不替代M1稳定性验收。T09仍实施中，真实首轮两次运行已通过但发布默认prompt兼容修正与独立票审尚待完成。
