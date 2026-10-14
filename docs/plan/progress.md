@@ -380,3 +380,22 @@ EXIT=0
 
 - 可复跑证据：忽略目录 `.superpowers/sdd/07-roadmap/T03-rtk-fix-report.md`、`T03-rtk-clean-tree.py/json`、`T03-rtk-readonly.py/json` 及红绿/两 Node/T04 原始输出。限定 `git diff --check` exit 0。未重跑 LLM、未改技能源或历史 T05 产物/result；本次验收只证明限定规则修复与确定性回归。
 - 独立限定复审：`962ff57` 可合入，无必须修改项。审查者从受审提交构建干净发布树，两个Node实际默认40/40；14项独立命令边界探针通过，原f2重扫C09=0且163项内容/权限未变。工作根Node18历史附件的8项失败记录保留。报告 `T03-rtk-review.md`。
+
+### 2026-10-14 T06 输出交付门槛修复
+
+- 基线：`f3ad946649f821b8c4ea77ee1f15533823de8e5d`。真实复测已正确读取四核心引用、主动选择零写入并保留容量，但未读取 output-schema、最终自然语言漏掉必保留字段，完整行为验收仍未通过。仅修改 SKILL 步骤5及末尾完成条件、evaluation 交付清单；T06 保持 🟡 待限定复审。
+- 交付前必须实际成功读取输出模板和交付清单；最终回复给出完整 YAML，逐键保留模板全部顶层键及适用对象结构。no-op 同样遵守，空数组/null/未确认缺口明确表达，不删字段、不复制模板默认结论、不编造事实或权限；沿用不写仓库 manifest 的边界，未新增许可要求。
+- 实际执行 `rtk proxy node .superpowers/sdd/07-roadmap/t06-real-fix-verify.mjs` exit0；ignored 脚本只追加本次门槛断言，原24字段/111节点及五组实际checker验证保留。output-schema 未改，内置 YAML parser 与 aa2d360 对比全部解析值一致。
+
+```text
+{"static":"PASS","files":11,"lines":80,"links":25,"top_keys":24,"recursive_shape_nodes":111,"toml_examples":3,"new_rules":"PASS","rtk_runtime_dependency":false}
+{"scenario":"f5","exit":0,"summary":{"error":0,"warn":0},"ids":[],"input_bytes_modes_preserved":true}
+{"scenario":"f6","exit":0,"summary":{"error":0,"warn":0},"ids":[],"input_bytes_modes_preserved":true}
+{"scenario":"ultra","exit":0,"summary":{"error":0,"warn":0},"ids":[],"input_bytes_modes_preserved":true}
+{"scenario":"legacy","exit":0,"summary":{"error":0,"warn":3},"ids":["A03","A04","A06"],"input_bytes_modes_preserved":true}
+{"scenario":"unknown","exit":1,"summary":{"error":1,"warn":0},"ids":["A07"],"input_bytes_modes_preserved":true}
+TEMP_FIXTURES_CLEANED=true
+OUTPUT_SCHEMA_ALL_PARSED_VALUES_UNCHANGED=true
+```
+
+- `rtk git diff --check -- skills/vic-agents` exit0；主体80行，产品两个文件4行新增/3行删除。未启动LLM/代理，未改checker、原试用附件、业务仓库或ADR；确定性结果不证明真实模型后续遵守，也不追认完整行为通过。ignored报告 `.superpowers/sdd/07-roadmap/T06-summary-fix-report.md`。

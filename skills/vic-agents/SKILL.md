@@ -69,12 +69,12 @@ description: 仅在用户明确要求评估或配置 Codex 子代理、更新代
 
 ### 5. 验证并报告
 
-按 [验证与交付清单](references/evaluation-and-contracts.md) 检查实际差异、TOML、字段、路径、模型/推理及完成证据。
+交付前必须成功读取 [YAML 摘要](references/output-schema.yaml) 与 [验证与交付清单](references/evaluation-and-contracts.md) 正文，再检查实际差异、TOML、字段、路径、模型/推理及完成证据；读取失败时报告缺口，不宣称交付完整。
 
 执行 `node <实际插件根>/scripts/vic-check.mjs --agents --root <目标仓库> --json`（目标指导要求命令代理时遵守）。修复本次目标相关且已授权的问题后重跑；无关历史错误保留用户内容，报告未通过及处理路由，不为全库 0 error 扩大写入。零配置收益优先零写入；检查器输出不证明运行时加载或账户模型可用性。
 
-回复用简体中文，字段、路径、模型名和必要术语保留原文。按 [YAML 摘要](references/output-schema.yaml) 保留本次判断、能力、最小/增强方案、evaluation、evidence_requirements、guardrails、模型、delegation、bridge 与实际工件清单。仅必要风险设置 human_checkpoints，已有授权直接记录。
+最终回复用简体中文并给出完整 YAML 摘要，字段、路径、模型名和必要术语保留原文。保留模板全部顶层键及适用对象结构，逐项按本次证据填值；不适用列表用空数组、无值用 null、未确认状态或缺口明确说明，不删字段、不复制模板默认结论、不编造事实或权限。no-op 同样遵守；仅必要风险设置 human_checkpoints，已有授权直接记录。
 
 `initialized_project`、`initialization_required`、`ready_for_multi_agent`、`use_multi_agent` 等判断只在回复中；不回写合同。摘要默认不保存为仓库 manifest。列清创建、修改、保留、待处理文件及未验证项，核验日期只填实际完成的核验。核对来源正文确实读取；本地快照日期/路径与本轮官方页面核验日期/URL分别说明，不能用运行当天或快照日期冒充本轮核验。写入拒绝后保留现场，停止该写分支，不换路径或工具规避拒绝；继续独立只读工作，只报告有证据的动作、拒绝和实际差异。文件未变不证明主动 no-op，回合完成不证明配置成功。
 
-完成条件：报告与实际差异、检查结果一致，所有必保留摘要字段齐全；有未通过检查时明确失败，不宣称完成验证。示例见 [三种场景](references/examples.md)，官方行为说明见 [工程依据](references/engineering-notes.md)。
+完成条件：输出模板和交付清单正文已实际读取，最终 YAML 已逐键对照模板，全部顶层键及适用对象结构齐全，报告与实际差异、检查结果一致；no-op 也通过此门槛。有未通过检查时明确失败，不宣称完成验证。示例见 [三种场景](references/examples.md)，官方行为说明见 [工程依据](references/engineering-notes.md)。
