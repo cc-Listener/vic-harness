@@ -1,0 +1,13 @@
+{
+  "name": "vic-harness",
+  "version": "0.1.0",
+  "description": "可进化的工程 Harness：项目合同、多代理配置、确定性检查、失败学习与剪枝（当前为占位骨架）",
+  "keywords": ["harness", "bootstrap", "agents-md", "multi-agent", "codex"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Vic Harness",
+    "shortDescription": "工程 Harness 插件骨架，技能行为待后续任务实现",
+    "category": "Development",
+    "defaultPrompt": "用 $vic-harness:vic-router 查看当前实现状态"
+  }
+}

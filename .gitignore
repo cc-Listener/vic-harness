@@ -3,3 +3,4 @@ __MACOSX/
 node_modules/
 evals/results/*.json
 evals/.tmp/
+.superpowers/sdd/

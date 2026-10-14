@@ -7,7 +7,7 @@
 | ID | 标题 | 里程碑 | 状态 | 完成日期 | 备注 |
 |---|---|---|---|---|---|
 | T00 | 建仓库并核验未决问题 | M0 | ✅ | 2026-10-14 | Q1–Q4、Q9 已写结论；独立审查可合入；完整 LLM 回合留 T09 |
-| T01 | 插件骨架 | M1 | ⬜ | | |
+| T01 | 插件骨架 | M1 | ✅ | 2026-10-14 | 六技能隔离安装与发现验收通过；独立审查待定 |
 | T02 | 合同 schema v2 | M1 | ⬜ | | |
 | T03 | vic-check：解析与合同规则 | M1 | ⬜ | | |
 | T04 | 评测 fixtures f1–f4 与断言器 | M1 | ⬜ | | |
@@ -67,6 +67,51 @@ T05、T06 完成时，把 08-v1-migration.md 的勾选结果贴在这里。
 - 独立审查：`review_t00` 结论“可合入，无必须修改项”；重跑五题结论、CLI 版本/选项、`git diff --check`、Hard stops 检查通过。临时探针已清理，未二次复现；本轮官方打包页面返回 403，审查未把它当作实测证据。实现提交 `572b033`。
 
 每个会话结束时追加一条，供下一个会话接手：
+
+### 2026-10-14 T01 插件骨架
+- 做了什么：新增兼容 Codex manifest、本地官方 metadata 格式 marketplace、六个仅含 frontmatter 和一句话的占位技能、lab 说明与开发中 CHANGELOG；README 加入本地安装步骤和明确的占位状态，gitignore 忽略本地实施证据目录。
+- 产出文件：`.codex-plugin/plugin.json`、`.agents/plugins/marketplace.json`、`skills/vic-{bootstrap,agents,check,learn,prune,router}/SKILL.md`、`lab/README.md`、`.gitignore`、`README.md`、`CHANGELOG.md`、本进度文件。
+- 验证方法：通过 Python 子进程 env 指定临时 `CODEX_HOME`；实际执行 `rtk proxy codex plugin marketplace add <repo> --json`、`plugin add vic-harness@vic-harness-local --json`、`plugin list --marketplace vic-harness-local --json`，再启动 `rtk proxy codex app-server --stdio`，initialize 后请求 `skills/list`（临时空工作区，forceReload=true）。没有读取/复制凭据或修改全局配置；安装测试最后卸载并清理。
+- 原始关键输出（仅省去机器路径；六技能字段直接取自 API 响应）：
+
+```text
+COMMAND=codex plugin marketplace add <repo> --json
+EXIT=0
+"marketplaceName": "vic-harness-local"
+COMMAND=codex plugin add vic-harness@vic-harness-local --json
+EXIT=0
+"pluginId": "vic-harness@vic-harness-local"
+"version": "0.1.0"
+COMMAND=codex plugin list --marketplace vic-harness-local --json
+EXIT=0
+"installed": true
+"enabled": true
+ERRORS=[]
+{"name": "vic-harness:vic-agents", "enabled": true, "pluginId": "vic-harness@vic-harness-local"}
+{"name": "vic-harness:vic-bootstrap", "enabled": true, "pluginId": "vic-harness@vic-harness-local"}
+{"name": "vic-harness:vic-check", "enabled": true, "pluginId": "vic-harness@vic-harness-local"}
+{"name": "vic-harness:vic-learn", "enabled": true, "pluginId": "vic-harness@vic-harness-local"}
+{"name": "vic-harness:vic-prune", "enabled": true, "pluginId": "vic-harness@vic-harness-local"}
+{"name": "vic-harness:vic-router", "enabled": true, "pluginId": "vic-harness@vic-harness-local"}
+SKILL_COUNT=6
+T01_DISCOVERY_PASS=true
+COMMAND=codex plugin remove vic-harness@vic-harness-local --json
+EXIT=0
+APP_SERVER_EXITED=true
+TEMP_ROOT_EXISTS=false
+skills/vic-agents/SKILL.md: lines=6, body_lines=1
+skills/vic-bootstrap/SKILL.md: lines=6, body_lines=1
+skills/vic-check/SKILL.md: lines=6, body_lines=1
+skills/vic-learn/SKILL.md: lines=6, body_lines=1
+skills/vic-prune/SKILL.md: lines=6, body_lines=1
+skills/vic-router/SKILL.md: lines=6, body_lines=1
+T01_STATIC_PASS=true
+```
+
+- 其他验证：Python 断言两份 JSON 可解析、skills 字符串、无 hooks 引用、六个正文各一句话且总行数 ≤150、插件产出无软链/用户绝对路径；`rtk git diff --check` exit 0，无输出。
+- 未完成 / 遗留：技能业务行为尚未实现，正式 `agents/openai.yaml` 调用策略按简报留给后续技能任务；占位 frontmatter 和正文先声明四个写入型技能仅供用户明确调用。没有执行 LLM 回合，未声称隐式策略或技能功能已完成。
+- 给下个会话的提示：T02 可开始 schema；继续使用 `skills: "./skills/"`、local source `{"source":"local","path":"./"}`。M1 不引用未来 hook；显式名称优先使用 `$vic-harness:vic-bootstrap`。
+- 独立审查：待定，由协调会话另行派发；本实施会话未启动审查者或子代理。
 
 ```
 ### <日期> <ticket ID> <模型>
