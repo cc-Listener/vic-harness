@@ -14,7 +14,7 @@
 | T05 | vic-bootstrap v2 | M1 | ✅ | 2026-10-14 | 24188fb完整独立票审通过；四fixture真实两轮/0error/全树no-op复验通过；open P2/P3已归档，M1稳定性未通过 |
 | T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 静态迁移与两次限定修复均独立通过；真实试用主动no-op/完整摘要已验证，仍有3项已披露输出缺陷移交T12，完整行为未通过 |
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
-| T08 | vic-router 与 vic-check skill 文本 | M1 | 🟡 | | T05/T06依赖已完成，独立新上下文实施中 |
+| T08 | vic-router 与 vic-check skill 文本 | M1 | 🟡 | | 两SKILL文本及CLI事实验证完成，🟡待独立票审；未执行真实LLM路由评测 |
 | T09 | 评测运行器 | M1 | 🟡 | | T04/T05依赖已完成，独立新上下文实施中；固定provider及请求条件 |
 | — | 🚩 发布 v0.1.0 | M1 | ⬜ | | |
 | T10 | 来源字段与过期检测 | M2 | ⬜ | | |
@@ -496,3 +496,12 @@ OUTPUT_SCHEMA_ALL_PARSED_VALUES_UNCHANGED=true
 - 独立复核Git提交六blob/冻结/各run一致、31文件manifest及962ff57共享工具/d70792b断言来源一致；八回合完整SKILL、四refs、schema正文及完成/usage有正证据。153条原始完成命令及inline写入核查未见禁区读取或外部副作用；f3外部段262字节保持。
 - 原票可完成不等于发布通过：请求LI P2和普通入口展示P3仍open，真实失败不覆盖；luna f1仍1/3，其他未完成三次，native loader业务调用和真实试用等未由本票替代。报告/独立原始复验附件：ignored T05-final-review.md、T05-final-review-recheck.json、T05-final-review-events.json。
 - T08、T09按已完成依赖正式并行，互斥skill文本/evals目录，进度与提交串行；apple-tools bootstrap按已准备方案只做一次隔离技术试用，原仓库只读。任何受限合同处理不得宣称标准迁移或no-op。
+
+### 2026-10-14 T08 vic-router 与 vic-check 文本（待独立票审）
+
+- 实际产出：`skills/vic-router/SKILL.md`（33行）、`skills/vic-check/SKILL.md`（42行）。router覆盖03-skills §6全部11场景及外部未安装替代，按真实会话技能列表使用准确名称；只推荐，不执行。check从实际SKILL位置解析共享脚本并显式传目标根，只读解释结果与路由。
+- M1边界：learn到M2/T13、prune到M3/T17；当前均占位，提供人工可执行替代。drift到M2/T10，当前CLI拒绝；不把0error当未过期、模型可用或配置生效证明。strict按实装仅额外报告gate弃用command_hint的C01 error，不声称全部warning升级。
+- 实际文本探针：ROUTES=11、LINK_OK=true；两文件≤150行、无软链/用户绝对路径。`rtk git diff --check` exit0。
+- 实际CLI探针：空目标all/contract/agents exit0；quiet空输出、json+quiet优先JSON；drift/help/范围冲突exit2且CHECKER诊断；代理旧max_threads在agents/all/agents+strict均exit0/error0/warn1；坏代理TOML与坏合同YAML分别exit1/error1/warn0。每次运行前后目标逐文件SHA256与路径清单一致，临时目录已清理。
+- 相关现有测试：`rtk proxy node --test tests/cli.test.mjs tests/contracts.test.mjs` 12/12通过；代理测试15/15通过（初次命令同时指定不存在的checker.test.mjs，实际只发现agents.test.mjs，不算不存在文件测试证据）。共27项实际通过；未新增镜像文本实现测试。
+- 范围与限制：仅两SKILL及本progress进入提交；无外部安装、npm依赖、业务gate、模型运行或发布。真实LLM路由、完整f1–f7、缓存内模型读取未执行，文本/CLI验证不替代行为验收或M1稳定性。实施详情与关键输出保存在ignored `T08-report.md`；状态保持🟡待独立票审。
