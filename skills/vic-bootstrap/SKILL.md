@@ -17,6 +17,7 @@ description: 仅在用户明确要求时，为仓库初始化或增量刷新项�
 - 所有合同路径相对目标仓库根；Markdown 链接相对所在文件。发布文本和产物不写用户绝对路径。
 - 只运行已检查过内容的本地只读 gate；禁止 deploy、publish、release、数据库迁移和任何会写外部系统的命令。
 - 命令示例使用标准工具；实际执行遵守目标 guidance 的命令代理要求，不假设仓库已安装 RTK。
+- 仅当目标 guidance 要求 RTK 且本次已选择执行 `git diff --check` 时，使用 `rtk proxy git diff --check` 保留原始诊断；检查结果仍以真实退出状态为准。
 
 ## 共享资源
 

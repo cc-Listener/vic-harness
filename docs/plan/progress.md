@@ -742,3 +742,11 @@ Node18.20.8:
 - 原/early/formal的264附件逐文件集与字节一致，deep-copy268项含附加文件；执行manifest713项size/hash独审全匹配，SHA256 `0b2d443b384966348107775e821f268f82398d2230921bb948a3f80fb9315937`。当前四来源树独立hash/type/mode与保存快照一致，只有两lane允许的metrics/results变化。11成功repo/bundle/oracle清理，f2r3三失败现场和外部系列根保留。四审计按event→audit→deep→semantic执行且工具记录均exit0；归档有分离输出但无四份独立command退出码记录，不能由空stderr证明exit0，也未为此重复审计。
 - 新增 [第四系列incident](../harness/incidents/2026-10-15-m1-fourth-bootstrap.md)。完整本地依据为ignored `M1-fourth-validation-report.md`、`M1-fourth-review.md`、`validation-final-checks.json`、`validation-manifest.json`及独审 `final-consolidation.json`、`final-current-source-integrity.json`。本次只归档事实和进度，不修改产品、旧评分或原证据。
 - apple-tools隔离副本已有两技能运行与技术问题记录，可计入该技术子项；bootstrap受限零写且132error/3warn仍未通过，agents既有2P2+1P3保留。历史source-path试用不能冒充第四候选同源成功体验。原规划不要求先为自定义合同开发迁移；尚缺用户对已有真实输出和限制的体验反馈、验收及发版决定。技术门通过不签M1整体完成，不tag/push、不启动T10/M2。
+
+### 2026-10-15 T05 RTK 诊断保留指导限定修复
+
+- 从 `473e405` 仅在 bootstrap 主 SKILL 既有命令代理说明后新增一行：目标 guidance 要求 RTK，且本次已选择执行 `git diff --check` 时，使用 `rtk proxy git diff --check` 保留诊断，结果依据真实退出状态。产品没有固定调用点，本项是调用指导；没有新增必跑 gate、RTK 依赖或 no-op 写入，外部字节与所有权规则保持。
+- fresh 实现与两个 fresh 独审分别完成。Standards、Spec 两轴均通过，无必须修改项；各自独立核对基线/候选/精确 diff/既有诊断绑定一致。受审产品 diff SHA256 为 `11b3b632f9ead10a7623ad95a96c9f5ded5db2f8e13eb2d65ed21c4dd75ab301`，候选 SKILL SHA256 为 `0b15af54aa1f7e7c8dc78146065edee262e6e626982c22f0ad9b55d6145c9abd`。
+- 实现及 Standards 独审各实际执行一次 `rtk proxy git diff --check`，均 exit 0、输出为空；独审确认总52行、正文49行、18个链接目标有效。仅静态核验及引用既有 RTK 正反例，没有重跑模型、机制探针、L1、安装或系列评测。
+- ignored 证据为 `T05-M1-diff-diagnostics-fix-report.md`、`T05-M1-diff-diagnostics-fix-binding.json`、`T05-M1-diff-diagnostics-standards-review.md`、`T05-M1-diff-diagnostics-spec-review.md`。Spec 文件由协调原文保存独审返回消息，非新增审查运行。
+- 本项不证明模型会正确报告失败，不关闭不实验证、F03/F04或T05/M1。第四系列结果仍只绑定冻结 `9969f72`，不能充作本次修改后的行为回归；没有授权第五系列、发布或M2。现有已知限制及真实试用输出已整理，等待用户实际体验反馈和具体处置决定；不得把用户指定仓库当作验收通过。
