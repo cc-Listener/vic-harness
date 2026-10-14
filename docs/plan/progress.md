@@ -482,3 +482,10 @@ OUTPUT_SCHEMA_ALL_PARSED_VALUES_UNCHANGED=true
 - Luna规定L2统计：f1 **1/3**，f2 **2/2（第三次未跑）**，f3 **1/2（第三次未跑）**，f4 **1/1（未追加）**。f1未满足2/3，其余未全量重复，不能宣称M1发布通过；无第四次、没有跨源混计。source-path不证明原生插件业务加载，L3/全部变体/真实仓库门槛另验。
 - 推荐sol/low的旧两条400发生在ignore-user-config切换后的ChatGPT服务，技能工具调用前拒绝，单列环境失败不计luna分母；用户正常app-server的既有provider与该条件不同，不能推断正常provider不支持sol。未读/输出密钥或URL、复制认证/provider配置、修改全局。未来正常provider系列另固定条件，等整票审后执行，不在本窗口追加模型。
 - 最终报告 `T05-report.md`；冻结/条件 `T05-luna-binding.json`，八次结果SHA/次数/slot状态 `T05-luna-series-summary.json`，机械与人工分层审计 `T05-luna-audit-results.json` / `T05-luna-behavior-audit.json`。旧报告 `T05-old-candidate-report.md` 与旧诊断/六次JSONL/result原样保留。所有模型自然结束、slot为空。T05保持🟡，原票门槛齐，待完整独立票审；不push、不发布。
+
+### 2026-10-14 M1 已确认行为问题正式归档
+
+- 新增 `docs/harness/incidents/2026-10-14-bootstrap.md` 与 `2026-10-14-agents.md`，由独立归档上下文按既有裁定整理，协调逐文复核。它们保留可独立理解的触发、观察、影响、未知和后续责任，不依赖 ignored 链接才知道问题。
+- bootstrap 记录请求 LI P2、真实二轮 refresh/树变化、外部段少一换行及普通入口展示 P3；agents 记录主会话绑定角色文件 P2、available 证据不足 P2（真实可用性未知）和空数组占位 P3。全部 open，不冒称已修复；agents 后续交 T12。
+- 协调实际复核八份原始 result：f1 false/true/false，f2 true/true，f3 false/true，f4 true；五份 pass 的二轮 added/deleted/changed 均空，f1 两份 fail 均改合同及组件文档。f1 规定 L2 1/3，其他尚未完成三次，M1未通过。
+- 两份文档17个相对链接存在；机器绝对路径和正文尾随空白扫描通过。仅文档归档，无新模型调用、产品变更、模板或自动学习；未改旧原始结果。T05提交 `24188fbb84a799c3aac45eceded6915ad3fc0331` 的完整独立票审正在进行。
