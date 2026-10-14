@@ -11,7 +11,7 @@
 | T02 | 合同 schema v2 | M1 | ✅ | 2026-10-14 | 标准 JSON Schema 小子集；58 个 v1 业务路径、163 个项目示例路径验收通过；独立审查可合入 |
 | T03 | vic-check：解析与合同规则 | M1 | ✅ | 2026-10-14 | 应用文档扫描及C09命令代理误报已修；独立复审两Node40/40、14边界探针、真实f2只读检查均通过 |
 | T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 特殊文件名与合法表示误拒绝均已修复；两Node90项及各25独立探针通过；限定复审可合入 |
-| T05 | vic-bootstrap v2 | M1 | 🟡 | | 当前候选f1完整行为0/3，停止追加采样；独立诊断后做一次事实覆盖流程收敛，旧失败全部保留，尚未验收 |
+| T05 | vic-bootstrap v2 | M1 | 🟡 | | 新源0335d370原票f1–f4门槛齐，待完整独立票审；open P2/P3保留；luna规定L2 f1仅1/3，M1未通过 |
 | T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 静态迁移与两次限定修复均独立通过；真实试用主动no-op/完整摘要已验证，仍有3项已披露输出缺陷移交T12，完整行为未通过 |
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
 | T08 | vic-router 与 vic-check skill 文本 | M1 | ⬜ | | |
@@ -63,6 +63,34 @@
 ## 迁移勾选
 
 T05、T06 完成时，把 08-v1-migration.md 的勾选结果贴在这里。
+
+### T05 · project-bootstrap-contract → vic-bootstrap（2026-10-14，待整票审）
+
+必须保留（静态迁移义务完成，不表示每次模型无偏差）：
+
+- [x] bootstrap / refresh / no-op 三分类：SKILL步骤3、refresh-policy；无变化前核对完整性与深层覆盖。
+- [x] 导航只做读取顺序、canonical指针、最小路由与少量hard stops：artifacts导航层；≤120行，外部段原字节优先。
+- [x] 人读文档与machine-readable事实分离：SKILL步骤5，先机器合同再事实投影。
+- [x] override/scoped优先级与既有等价入口：SKILL、artifacts、ownership。
+- [x] app-deep信号/产物、根集中与docs/apps落位：app-deep，普通源码目录不虚构子应用。
+- [x] component质量门四项：artifacts/app-deep，表、符号索引、定位顺序、rg方法及所属LI对应。
+- [x] uncertainty不编造、中文输出保留技术名：SKILL与artifacts。
+
+必须修改：
+
+- [x] 去除宿主绝对路径、改为vic-agents职责引用；六发布文件无用户绝对路径/软链。
+- [x] 配置/TOML/bridge归vic-agents，平行层不生成；legacy只读checker warning，不为保护而读/哈希禁区；docs/agents外部资产保护。
+- [x] refresh证据以共享refresh-log schema为唯一结构定义，M1明确不写日志，不抄教学example的M2字段。
+- [x] app-deep移到独立reference；所有权与外部原字节保护在ownership；重复边界集中表达。
+- [x] 共享schema规则/示例从实际SKILL目录定位；扩展字段由T02 schema承载，本票生成M1允许字段，不提前产出M2来源资产。
+- [x] gate公共command代替新生成command_hint，verified/evidence/confidence；只读lint/typecheck/format-check按真实工具条件执行。当前夹具静态确认本地依赖缺失，verified:false且未执行，不冒充运行通过。
+- [x] conventions只索引可证实事实，判断规则归用户CODING_STANDARDS，领域与工作流只建立canonical索引。
+- [ ] v0.2的UA inferred证据留T14，非本票遗漏。
+- [x] 结束实际执行vic-check；通过样本均0 error，f3现存legacy为A06 warn并交vic-agents。
+- [ ] v0.2的refresh-log留T11；M1二轮no-op保持真实零写入。
+- [x] 改名、英文触发description、openai显示/默认提示、explicit-only policy；SKILL48行、21链接有效。
+
+验收分层：原票四fixture固定expected/真实no-op/checker证据已齐；请求使用LI的open P2、无封装表展示open P3独立披露，不改expected或raw pass。安全/所有权/原字节/幂等真实fail仍计fail。Luna发布重复未全量通过，T05保持🟡待完整独立票审。
 
 ### T06 · multi-agent-config → vic-agents（2026-10-14）
 
@@ -442,3 +470,15 @@ OUTPUT_SCHEMA_ALL_PARSED_VALUES_UNCHANGED=true
 - 两轮成功验收均两个 remove exit0，最终 installed/available 为空，app-server exit0，TEMP_ROOT_EXISTS=false。实施的两次脚本环境兼容失败原始记录保留，其临时环境也已清理；不清理其他 ticket 证据、不用 git clean。
 - 本地质量与规范独立审查通过，无必须修改项；完整产品 diff、报告及原始证据在 ignored `T19-report.md`、`T19-product.diff`、`T19-evidence.txt`、`T19-review.md` 和独立证据保留。`rtk git diff --check` exit0。
 - 物理干净机器验收仍待验：本轮独立临时 CODEX_HOME 仍可见宿主技能，不能冒充路线图验收。T19 保持🟡、完成日期留空，不代表 M3 发布完成；仅本地提交，不 push、不发布。
+
+### 2026-10-14 T05 同源原票证据齐与限定提交
+
+- 发布产出仅vic-bootstrap六文件；主技能48行/21本地链接、explicit-only、无软链/宿主绝对路径。静态独立准入后源冻结为 `0335d370-65a0-4737-9b9c-6b057666b8ee`；SKILL SHA256 `cb6236147100c95c2f4bc4ce1dd71f19f1b3926a8f077a3b449cb2051d209e30`，六文件tree SHA256 `4575ebe06b2c92804ecd3fb03e63808fb18aa3a7334210230f8489d994af6f8b`。统一根/app事实集合→机器合同→人读投影→双向覆盖，不新增落盘状态或fixture答案提示；评测期间六文件未改。
+- 固定上游：scripts/schemas `962ff5707ee2e1015d03f93b0367f818d53e3e14`，assert/expected `d70792ba52e16c2dd3198662ae095b39dfafe9db`；31文件冻结manifest与期末工作区逐项匹配，所有run来源/evaluator前后不变，原始result/JSONL和失败未替换。
+- 实际命令：`rtk proxy node .superpowers/sdd/07-roadmap/T05-run-luna.mjs <fixture> <冻结plugin> <冻结evaluator>`；显式请求 `gpt-6-luna / medium`、never/workspace-write/ephemeral/ignore-user-config、plugins/hooks disabled；fixture工作repo外置，每份最多3次、最多2路。实际服务端model/effort缺原始元数据，保持未知。
+- 原票推荐通过证据：f1 `2026-10-14T10-22-22-342Z-f1-single-app-ad2171f4` 首轮29/0/1→最终30/0/0；f2 `2026-10-14T10-15-44-341Z-f2-monorepo-b583875b` 与 `2026-10-14T10-22-22-342Z-f2-monorepo-e648660c` 均40/0/1→41/0/0；f3 `2026-10-14T10-25-51-846Z-f3-legacy-layers-1673a765` 22/0/1→23/0/0；f4 `2026-10-14T10-19-38-395Z-f4-empty-5b96c100` 18/0/1→19/0/0。各轮exit0/turn.completed1/usage及真实SKILL与四reference读取有原始事件；五样本二轮no-op、file_change0、全树added/deleted/changed空、checker0error。f3仅A06现存legacy warn，不读配置正文、不迁移外部层。
+- 真实失败保留：f1第1次别名无必要刷新、第3次纠正client source并补拦截器LI，二轮均两文件变化；f3第1次外部段262→261字节，少一换行，首轮即失败。全部命令含inline脚本已人工核对，未见禁区内容/递归检索/哈希、安装、联网探测、缓存清理或范围外写入；f3字节违例不降级。
+- 独立范围裁定 `T05-acceptance-scope-adjudication.md`：原票、06规定L2、附加质量分开。f1第2次/f2两次请求使用定位LI遗漏是open P2，但地图/GP/CR有准确备用入口，不扩expected或覆盖raw pass；无封装表列明确非共享的真实普通入口为open P3展示偏差。可带incident完成原票，不能声称所有指令/语义无缺陷；M1仍需审查已知限制。正式incident由协调单独归档，本提交不纳入并行incident文件。
+- Luna规定L2统计：f1 **1/3**，f2 **2/2（第三次未跑）**，f3 **1/2（第三次未跑）**，f4 **1/1（未追加）**。f1未满足2/3，其余未全量重复，不能宣称M1发布通过；无第四次、没有跨源混计。source-path不证明原生插件业务加载，L3/全部变体/真实仓库门槛另验。
+- 推荐sol/low的旧两条400发生在ignore-user-config切换后的ChatGPT服务，技能工具调用前拒绝，单列环境失败不计luna分母；用户正常app-server的既有provider与该条件不同，不能推断正常provider不支持sol。未读/输出密钥或URL、复制认证/provider配置、修改全局。未来正常provider系列另固定条件，等整票审后执行，不在本窗口追加模型。
+- 最终报告 `T05-report.md`；冻结/条件 `T05-luna-binding.json`，八次结果SHA/次数/slot状态 `T05-luna-series-summary.json`，机械与人工分层审计 `T05-luna-audit-results.json` / `T05-luna-behavior-audit.json`。旧报告 `T05-old-candidate-report.md` 与旧诊断/六次JSONL/result原样保留。所有模型自然结束、slot为空。T05保持🟡，原票门槛齐，待完整独立票审；不push、不发布。

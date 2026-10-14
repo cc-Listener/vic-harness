@@ -1,0 +1,6 @@
+interface:
+  display_name: "仓库事实合同"
+  short_description: "初始化或增量刷新导航与项目事实"
+  default_prompt: "使用 $vic-harness:vic-bootstrap 初始化或增量刷新当前仓库的导航与项目事实合同，保留外部内容；一致时零文件改动。"
+policy:
+  allow_implicit_invocation: false
