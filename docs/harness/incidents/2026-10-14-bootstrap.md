@@ -4,7 +4,7 @@
 
 ## 来源与验收边界
 
-本记录限定于冻结源 `0335d370-65a0-4737-9b9c-6b057666b8ee`，主技能 SHA256 `cb6236147100c95c2f4bc4ce1dd71f19f1b3926a8f077a3b449cb2051d209e30`，六文件树 SHA256 `4575ebe06b2c92804ecd3fb03e63808fb18aa3a7334210230f8489d994af6f8b`。请求模型为 `gpt-6-luna`、推理档位 `medium`；实际服务端模型和档位均未知。显式 source-path 执行不证明原生插件加载。
+B01–B04 限定于冻结源 `0335d370-65a0-4737-9b9c-6b057666b8ee`，主技能 SHA256 `cb6236147100c95c2f4bc4ce1dd71f19f1b3926a8f077a3b449cb2051d209e30`，六文件树 SHA256 `4575ebe06b2c92804ecd3fb03e63808fb18aa3a7334210230f8489d994af6f8b`。请求模型为 `gpt-6-luna`、推理档位 `medium`；实际服务端模型和档位均未知。显式 source-path 执行不证明原生插件加载。
 
 规定 L2 依据固定 expected、checker 和真实二轮幂等计账；附加语义审计另行保留。原票每份至少一次真实完整两轮通过与 M1 同源每 fixture 三次至少两次通过是不同门槛；本文不结算整票或发布是否通过，不混用旧源、未知默认请求条件或其他模型条件。旧 `8d62557b` 报告仅供历史诊断，不能替代本源结果。
 
@@ -52,10 +52,26 @@ run ID：`2026-10-14T10-19-38-395Z-f4-empty-5b96c100`。组件表以“仓库脚
 
 期望：无组件表行的 import/包入口/源码/导出按 artifacts 写“未发现/无法确认”。观察与该具体展示规则有偏差，但未虚构封装、推荐错误 import 或生成虚假机器组件。影响/严重度：P3 展示偏差；规定 L2及本票样本 pass 可以保留，不宣称逐条格式完全遵守。已知呈现偏差，内部执行原因未知。处理：open，后续做无封装场景表示回归，不改原产物或样本结果。
 
+## 独立真实仓库受限输入试用记录（未完成刷新）
+
+日期：2026-10-14。run ID：`bootstrap-20261014T104734Z-3e2286ad`。冻结受审提交 `24188fbb84a799c3aac45eceded6915ad3fc0331`。本节与 B01–B04 的 luna 固定 fixture 样本分开：正常加载用户配置及其 provider，显式请求 `gpt-6.1-sol` / `low`，请求接受并自然完成；实际后端模型及档位仍 unknown。provider 配置一致性不证明独立网络路由或完整宿主隔离。本节不改旧样本结论，不参与其规定 L2 分母。
+
+触发与观察：真实仓库根及前端子合同为自定义 `version: 3` / `schema_profile: local`，包含 deployment/control_plane/git_workflow 扩展；冻结迁移规则没有对应无损迁移定义。模型主动进入 restricted 受限调查，停止合同及依赖导航写入，明确“刷新未完成，仓库零写入”，未归类 no-op，也未宣称 bootstrap 或标准迁移成功。期望：在没有无损定义时保留自定义扩展与消费者边界，只读报告缺口；后续刷新先明确无损迁移方案。
+
+实际执行证据：exit 0、93.760 秒，原始事件单个 turn.completed、零 turn.failed/error、零 file_change；没有可见写命令或依靠写入拒绝冒充主动停止。所需技能、所有权及受限识别材料有成功正文读取证据。冻结路径盘点/检索 item_14、item_17 均 exit 1 且输出空，不能当作成功读取，原因未知。
+
+标准 checker **未通过**：模型及外部前后检查均 exit 1、132 error / 3 warn，外部 before/after JSON 逐字节相同。计数为 C01=127、C02=4、C06=1、A03=2、A04=1；涉及标准 schema 不兼容、必填/路径及历史文档路径问题。模型如实报告，没有删除自定义扩展或修改历史问题追求零错误。执行成功与保护分支遵守不覆盖 checker 失败或未完成刷新；本次不是已证实的新产品保护缺陷，不新增严重度或归因。
+
+保护证据：副本 410 个非 .git 树条目的字节/大小/权限及 HEAD、Git 状态前后相同，changed_paths 为空；原仓库 322 个 tracked 文件字节/大小/权限、HEAD、状态与原保护基线相同，原完整非 .git 树 68,407 个条目元数据相同；冻结技能及共享资源 hash/权限树相同。原仓库 ignored/未跟踪内容未读取，`source_ignored_bytes_verified=false`，不能宣称全部字节验证；没有完整宿主系统调用监控。模型自身未验证完整树，以上保护比较来自外部技术证据，两者不混称。
+
+已知与未知：已知自定义合同无对应无损迁移定义、模型主动受限零写及标准检查失败；未知消费者兼容性、完整应用事实覆盖与无损迁移方案。项目测试/build/lint、人工体验、原生 loader 未验，`complete_bootstrap_verified=false`、`native_loader_verified=false`。不得将这次真实试用降级改绿或作为 M1 发布通过。
+
+处理与后续验证：保留受限输入及未完成刷新记录，后续需明确自定义合同和消费者的无损方案，再安排适用验收；本次不实施迁移、不重试、不手修输出。ignored 证据仅本地可用：[试用报告](../../../.superpowers/sdd/07-roadmap/M1-bootstrap-trial-report.md)、[原始结果](../../../.superpowers/sdd/07-roadmap/M1-real-trial/bootstrap-20261014T104734Z-3e2286ad/result.json)、[原始回复](../../../.superpowers/sdd/07-roadmap/M1-real-trial/bootstrap-20261014T104734Z-3e2286ad/last-message.txt)、[保护比较](../../../.superpowers/sdd/07-roadmap/M1-real-trial/bootstrap-20261014T104734Z-3e2286ad/protection.json)、[检查前](../../../.superpowers/sdd/07-roadmap/M1-real-trial/bootstrap-20261014T104734Z-3e2286ad/before-check.json)、[检查后](../../../.superpowers/sdd/07-roadmap/M1-real-trial/bootstrap-20261014T104734Z-3e2286ad/after-check.json)。
+
 ## 证据与发布限制
 
 公开规则见 [评测标准](../../plan/06-evals.md)、[路线图](../../plan/07-roadmap.md)、[bootstrap 技能](../../../skills/vic-bootstrap/SKILL.md)。本记录保留具体观察与裁定，即使本地附件不可用仍可理解问题。
 
 ignored 原始证据仅本地可用：[验收范围裁定](../../../.superpowers/sdd/07-roadmap/T05-acceptance-scope-adjudication.md)、[首次行为裁定](../../../.superpowers/sdd/07-roadmap/T05-luna-first-adjudication.md)、[流程诊断](../../../.superpowers/sdd/07-roadmap/T05-workflow-diagnosis.md)、[绑定记录](../../../.superpowers/sdd/07-roadmap/T05-luna-binding.json)、[行为审计](../../../.superpowers/sdd/07-roadmap/T05-luna-behavior-audit.json)。上述 run 的原始 result、断言、事件、首轮与最终产物位于本地 `T05-fixed-runs/<run ID>/`。
 
-本次仅归档，不新增模型运行、产品修复或测试结论。P2 定位缺陷不自动阻塞原票不等于 M1 可发布；所有真实幂等、外部字节、安全与所有权边界失败继续独立计账，发布所需完整采样和其他既定门槛仍须另行验收。
+本次归档编辑不新增模型运行、产品修复或测试结论；上述独立真实试用已由既有原始证据记录。P2 定位缺陷不自动阻塞原票不等于 M1 可发布；所有真实幂等、外部字节、安全与所有权边界失败继续独立计账，发布所需完整采样和其他既定门槛仍须另行验收。

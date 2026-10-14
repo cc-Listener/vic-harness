@@ -525,3 +525,11 @@ STANDARD_NODE_EXAMPLE=true; ABSOLUTE_USER_PATH=false; READ_ONLY_BOUNDARY_PRESERV
 ```
 
 - `rtk git diff --check` exit0；产品diff仅两行替换，只读禁止写入/网络/安装/业务gate及CLI语义未改。未重跑无关全套、未新增功能或测试；router、scripts、T09 evals、规划原件/ADR/reference未改。报告在ignored `T08-fix-report.md`，T08保持🟡待限定复审，不将R1确定性复验当LLM路由或M1发布验收。
+
+### 2026-10-14 真实仓库 bootstrap 单次受限试用
+
+- 在用户指定仓库的既有隔离副本中，从受审 `24188fb` Git对象冻结bootstrap执行一次；原仓库只读，包含的两份用户角色改动保持。新条件正常加载既有provider、请求sol/low，逐MCP禁用、notify空、plugins/hooks关、never/workspace-write，目标cwd两次公开config/read白名单核验通过；未读复制认证/连接，不保存完整config。
+- 实际命令 `rtk proxy python3 .superpowers/sdd/07-roadmap/M1-real-trial/run-bootstrap.py`；模型exit0、93.760秒、1 completed、0 failed/error。识别version3/local合同无无损迁移定义，主动restricted只读，明确刷新未完成、未归no-op/标准迁移成功。14条完成命令未见禁区直接读取或业务副作用，0 file_change；两条空检索exit1如实保留。
+- frozen checker前后及模型自身均exit1、132error/3warn，外部JSON逐字节相同；C01=127/C02=4/C06=1，A03=2/A04=1。标准检查未通过，不删自定义扩展强凑绿色。执行成功、受限保护、完整bootstrap和checker结论分别记录。
+- 副本410完整树条目字节/权限/HEAD/status相同；原322tracked字节/权限/HEAD/status以及68407完整树元数据相同，原ignored/未跟踪字节未读取未核验。冻结来源前后hash相同。协调直接核对原始最终回复、保护JSON、前后checker及原事件计数，与报告一致。
+- run_id `bootstrap-20261014T104734Z-3e2286ad`；ignored `M1-bootstrap-trial-report.md`及同目录原始证据保留，正式bootstrap incident追加独立条件/受限范围记录，无新产品保护缺陷归因。没有重试或手修产物。实际后端未知、native loader/人工体验未验，不能据此称M1发布通过。
