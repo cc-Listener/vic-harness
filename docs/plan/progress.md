@@ -16,7 +16,7 @@
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
 | T08 | vic-router 与 vic-check skill 文本 | M1 | ✅ | 2026-10-14 | 11场景及fallback完整；独立27测试/CLI探针通过，RTK依赖R1修复与Node-only限定复审通过 |
 | T09 | 评测运行器 | M1 | ✅ | 2026-10-14 | 真实f1旧绑定两轮L2通过；完整独审及超时/路径别名修复复审通过，双Node10/10；最终源码LLM另待M1 |
-| — | 🚩 发布 v0.1.0 | M1 | ⬜ | | |
+| — | 🚩 发布 v0.1.0 | M1 | 🟡 | | 单票及工程文档独审完成；最终技术验证进行中，未发布 |
 | T10 | 来源字段与过期检测 | M2 | ⬜ | | |
 | T11 | refresh-log | M2 | ⬜ | | |
 | T12 | vic-agents 的 fixtures 与评测 | M2 | ⬜ | | |
@@ -584,3 +584,10 @@ Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
 - 保留自定义合同只读受限、无 drift/refresh-log、正式 open incidents、source-path 与安装发现分证；M1 最终同源三次系列、native 业务 loader、人工体验仍待验。Matt 固定 SHA 本地接线与物理待验、UA 未集成及 CI 真实 PR 待验均如实披露。
 - 实际 `rtk proxy node evals/run.mjs --help` exit0，与 README 的 repeat/layer/model/effort/timeout 及可选 --rtk 一致；轻量脚本确认 VERSION_MATCH/JSON_PARSE/METADATA_SCOPE/LOCAL_LINKS/STANDARD_COMMANDS 均 true；`rtk git diff --check` exit0。未运行模型、安装、全套测试或发布。
 - ignored 报告 M1-release-docs-report.md；本次文字与 metadata 待独立审查，最终技术验收由协调随后冻结同源执行，不以文档收尾替代发布验收。
+
+### 2026-10-14 M1 工程文档独立审查通过与最终验证启动
+
+- 收尾提交a630f3a只改README/CHANGELOG/plugin描述及interface/progress；保持0.1.0开发未发布。四技能实现、两占位、M1无漂移/日志/钩子、标准Node/Codex命令、自定义合同受限、source-path与安装证据分开、Matt本地接线/UA缺席及已知incidents均明确。
+- 独立限定审查spec/质量通过，无必须修改或新增非阻塞项；实际核验CLI帮助、JSON/版本、Markdown链接、metadata仅三字段和四文件范围、diff检查。报告ignored M1-release-docs-report.md、M1-release-docs-review.md。
+- 最终技术验证从本次记录后的固定提交归档，使用外部干净树跑两Node默认测试、f1–f4各3次真实两轮（最多2路）、最终插件隔离安装发现。旧T05各条件及T09一次run不计入新12槽位，失败不替换。所有来源/配置/事件/用量/树比较留存，强边界与附加语义分层审计。
+- 本次是验证放行，不是发布通过；尚未打tag或发布。最终结果、独立里程碑审查和人工验收仍须如实完成。
