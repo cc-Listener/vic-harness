@@ -12,7 +12,7 @@
 | T03 | vic-check：解析与合同规则 | M1 | ✅ | 2026-10-14 | 应用文档扫描及C09命令代理误报已修；独立复审两Node40/40、14边界探针、真实f2只读检查均通过 |
 | T04 | 评测 fixtures f1–f4 与断言器 | M1 | ✅ | 2026-10-14 | 特殊文件名与合法表示误拒绝均已修复；两Node90项及各25独立探针通过；限定复审可合入 |
 | T05 | vic-bootstrap v2 | M1 | 🟡 | | 正在真实两轮评测并修正应用边界、定位索引和幂等问题；失败记录保留，尚未最终验收 |
-| T06 | vic-agents v2 | M1 | 🟡 | | 第一轮文本修复已独立审查通过，复测主动no-op与核心引用正确；最终摘要字段遗漏，交付门槛限定修复中 |
+| T06 | vic-agents v2 | M1 | ✅ | 2026-10-14 | 静态迁移与两次限定修复均独立通过；真实试用主动no-op/完整摘要已验证，仍有3项已披露输出缺陷移交T12，完整行为未通过 |
 | T07 | vic-check：代理配置规则 | M1 | ✅ | 2026-10-14 | A01–A07 与 --agents；Node18/当前 Node 38 tests 通过；独立审查可合入 |
 | T08 | vic-router 与 vic-check skill 文本 | M1 | ⬜ | | |
 | T09 | 评测运行器 | M1 | ⬜ | | |
@@ -399,3 +399,11 @@ OUTPUT_SCHEMA_ALL_PARSED_VALUES_UNCHANGED=true
 ```
 
 - `rtk git diff --check -- skills/vic-agents` exit0；主体80行，产品两个文件4行新增/3行删除。未启动LLM/代理，未改checker、原试用附件、业务仓库或ADR；确定性结果不证明真实模型后续遵守，也不追认完整行为通过。ignored报告 `.superpowers/sdd/07-roadmap/T06-summary-fix-report.md`。
+- 独立限定复审：`a259518` 可合入，无必须修复项；自己重跑80行/24顶层/111节点、schema字节与全部解析值不变，预算、权限和零写边界无回退。报告 `T06-summary-review.md`。
+
+### 2026-10-14 M1 agents 第三次试用与已知缺陷裁定
+
+- 从 `a259518` Git对象冻结，同中性prompt仅路径换、同权限；exit0，111.459秒，六份必读材料完整正文均有成功读取事件。最终YAML可解析，24顶层键齐全、无extra、适用递归结构无缺项；模型主动no-op并保留容量、角色、自定义合同，副本与原仓库内容/权限/HEAD/状态全不变，checker0error3warn。官方核验日期null/URL空列表、账户及loader未验证如实。
+- 仍有三个输出问题，完整 `skill_behavior_pass=false` 保留：主会话 materialized_path 错填 implementer TOML；code-review available 所给证据不足；空能力列表使用“无”占位项。没有填补模型输出、追认成功或启动第四回合。证据为 `M1-real-trial/agents-20261014T094004Z-7b792ea2/`。
+- 独立裁定 `T06-trial3-adjudication.md`：主会话绑定路径为P2确定语义错误，能力声明为P2证据不足（JSONL不含完整注入上下文，实际可用性未知），占位数组为P3表示错误。现有规则已清楚覆盖，无新文本缺口，不再叠加提示词或重复采样直到通过。三项没有配置或权限副作用，不自动构成M1发布阻塞；须在incidents及发布限制中披露，并移交T12行为回归。
+- T06正式静态迁移/确定性修复验收完成；M1隔离技术试用与问题记录不等于完整agents行为、T12稳定性、原生loader或人工体验通过。T12简报已加入三项具体回归与能力证据边界，M1收尾须将incident保存为相对路径的正式记录。
