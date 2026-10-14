@@ -1,0 +1,100 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile, mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import { load, dump } from '../scripts/vendor/js-yaml.mjs';
+import { checkCoverage } from '../skills/vic-bootstrap/scripts/coverage.mjs';
+
+const evidence = new URL('./fixtures/bootstrap-coverage/',import.meta.url);
+async function replay(t, round) {
+  const tree = JSON.parse(await readFile(new URL(`${round}.tree.json`,evidence),'utf8'));
+  const root = await mkdtemp(join(tmpdir(),'coverage-'));
+  t.after(() => rm(root,{recursive:true,force:true}));
+  for (const [path,item] of Object.entries(tree)) if (item.kind === 'file') {
+    assert.equal(createHash('sha256').update(Buffer.from(item.base64,'base64')).digest('hex'),item.sha256,`真实片段校验：${round}/${path}`);
+    await mkdir(join(root,path,'..'),{recursive:true}); await writeFile(join(root,path),Buffer.from(item.base64,'base64'));
+  }
+  return { root, tree, sources:Object.keys(tree).filter(p => /\.[jt]sx?$/.test(p) && !p.startsWith('.')) };
+}
+async function yaml(root,path,change) { const value = load(await readFile(join(root,path),'utf8')); change(value); await writeFile(join(root,path),dump(value)); }
+
+test('保留真实 r2 首轮：明确机械缺口与已读风险候选；二轮补齐产物没有这些反馈',async t => {
+  const first = await replay(t,'first'), second = await replay(t,'second');
+  const before = await readFile(join(first.root,'docs/apps/web/component-contract.md'));
+  const a = await checkCoverage(first.root,{sources:first.sources});
+  assert.equal(a.status,'incomplete');
+  assert.equal(a.findings.filter(f => f.kind === 'gap' && /VG/.test(f.message)).length,3);
+  assert.equal(a.findings.filter(f => /PA 定义重复/.test(f.message)).length,2);
+  for (const path of ['apps/web/vite.config.ts','apps/admin/vite.config.ts','apps/web/src/router/index.tsx','apps/web/src/request/index.ts']) assert.ok(a.findings.some(f => f.kind === 'review' && f.evidence === path));
+  assert.ok(a.findings.some(f => /LI：client/.test(f.message)));
+  assert.deepEqual(await readFile(join(first.root,'docs/apps/web/component-contract.md')),before);
+  const b = await checkCoverage(second.root,{sources:second.sources});
+  assert.deepEqual(b.findings,[]);
+});
+
+test('已核实语义事实逐字段检查；合法 refresh 补缺而准确人读内容保持',async t => {
+  const first = await replay(t,'first'), second = await replay(t,'second');
+  const path = 'contracts/apps/web-project-context.yaml';
+  const complete = load(await readFile(join(second.root,path),'utf8'));
+  const pa = complete.component_contract.preferred_abstractions[0];
+  const values = Object.fromEntries(['path','import','entry','source','exports'].map(k => [k,pa[k]]));
+  const input = { facts:[{kind:'PA',owner:path,evidence:pa.evidence,values}] };
+  assert.ok((await checkCoverage(first.root,input)).findings.some(f => /已核实/.test(f.message)));
+  const doc = await readFile(join(first.root,'docs/apps/web/component-contract.md'));
+  await yaml(first.root,path,v => { v.component_contract.preferred_abstractions.push(pa); });
+  assert.ok(!(await checkCoverage(first.root,input)).findings.some(f => /已核实/.test(f.message)));
+  assert.deepEqual(await readFile(join(first.root,'docs/apps/web/component-contract.md')),doc);
+  await yaml(first.root,path,v => { v.component_contract.preferred_abstractions.at(-1).source = 'apps/web/src/router/index.tsx'; });
+  assert.ok((await checkCoverage(first.root,input)).findings.some(f => /已核实/.test(f.message)));
+});
+
+test('准确别名、同类型聚合、普通脚本和无共享封装不误报；不同验证类型不能代替',async t => {
+  const {root,sources} = await replay(t,'second');
+  await yaml(root,'contracts/project-context.yaml',v => { v.conventions.validation_gates.find(g=>g.name==='test').command='rtk pnpm run test'; v.component_contract.preferred_abstractions=[]; });
+  for (const path of ['contracts/apps/web-project-context.yaml','contracts/apps/admin-project-context.yaml']) await yaml(root,path,v => { v.conventions.validation_gates=v.conventions.validation_gates.filter(g=>g.name==='build'); });
+  assert.deepEqual((await checkCoverage(root,{sources})).findings,[]);
+  const pkg = JSON.parse(await readFile(join(root,'package.json'),'utf8'));
+  pkg.scripts.dev='vite'; pkg.scripts.publish='npm publish'; pkg.scripts.audit='echo audit';
+  await writeFile(join(root,'package.json'),JSON.stringify(pkg));
+  assert.deepEqual((await checkCoverage(root,{sources})).findings,[]);
+  pkg.scripts.lint='pnpm -r typecheck'; await writeFile(join(root,'package.json'),JSON.stringify(pkg));
+  assert.equal((await checkCoverage(root,{sources})).findings.filter(f=>/VG:|VG：/.test(f.message)).length,2);
+});
+
+test('未知合同受限、危险路径拒绝；零写入检查不掩盖旧缺口',async t => {
+  const {root} = await replay(t,'first');
+  await assert.rejects(checkCoverage(root,{sources:['.codex/config.toml']}),/不可读取/);
+  await assert.rejects(checkCoverage(root,{sources:['../escape']}),/不可读取/);
+  await yaml(root,'contracts/project-context.yaml',v=> { v.custom_profile={keep:true}; });
+  assert.equal((await checkCoverage(root)).status,'restricted');
+});
+
+test('任意命名的低信息合同与有证据的嵌套聚合；普通导出没有强制 PA/LI',async t => {
+  const {root} = await replay(t,'second');
+  const pkg = JSON.parse(await readFile(join(root,'package.json'),'utf8'));
+  pkg.scripts.verify='pnpm inspect'; pkg.scripts.inspect='pnpm -r run lint && pnpm -r typecheck && pnpm -r build';
+  await writeFile(join(root,'package.json'),JSON.stringify(pkg));
+  await yaml(root,'contracts/project-context.yaml',v => { v.conventions.validation_gates.push({command:'pnpm verify'}); });
+  for (const path of ['contracts/apps/web-project-context.yaml','contracts/apps/admin-project-context.yaml']) await yaml(root,path,v => { v.conventions.validation_gates=[]; });
+  await mkdir(join(root,'lib'),{recursive:true}); await writeFile(join(root,'lib/plain.ts'),'export const ordinary = 42;');
+  assert.deepEqual((await checkCoverage(root,{sources:['lib/plain.ts']})).findings,[]);
+  const minimal = {schema_version:2,project_map:{guarded_paths:[]},conventions:{validation_gates:[]},component_contract:{preferred_abstractions:[],locate_index:[]}};
+  await writeFile(join(root,'contracts/project-context.yaml'),dump(minimal));
+  await writeFile(join(root,'docs/conventions.md'),'未发现验证入口。');
+  assert.equal((await checkCoverage(root,{sources:['lib/plain.ts']})).status,'covered-within-scope');
+});
+
+test('真实反例的命令行反馈退出非零；补齐后退出零且不写目标树',async t => {
+  const script = fileURLToPath(new URL('../skills/vic-bootstrap/scripts/coverage.mjs',import.meta.url));
+  for (const round of ['first','second']) {
+    const {root,sources,tree} = await replay(t,round);
+    const result = spawnSync(process.execPath,[script,root],{input:JSON.stringify({sources}),encoding:'utf8'});
+    assert.equal(result.status,round === 'first' ? 1 : 0,result.stderr);
+    assert.equal(JSON.parse(result.stdout).status,round === 'first' ? 'incomplete' : 'covered-within-scope');
+    for (const [path,item] of Object.entries(tree)) if (item.kind==='file') assert.deepEqual(await readFile(join(root,path)),Buffer.from(item.base64,'base64'));
+  }
+});

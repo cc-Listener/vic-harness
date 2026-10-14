@@ -617,3 +617,11 @@ Node18: # tests 10 / # pass 10 / # fail 0 / EXIT=0
 - 新增发布清单/树/hash、oracle binding、逐阶段完整性和显式路径事件审计。bundle/oracle/live 来源变动或显式验收材料读取均失败并保留证据；可信 oracle 变动时不执行其中工具。恢复文件显式 chmod 保持冻结 mode；原组清理、路径别名、配置白名单、流 error 严格失败、用量和 CSV 行为保留。此为资源和路径隔离，不能证明任意宿主读取或动态 shell 路径被操作系统阻断。
 - 实现者最终实际执行两套 evals/runner.test.mjs：当前 Node25.8.1 与 Node18.20.8 各11/11通过、无跳过；diff --check exit0。反例证明完整 source 的 expected 可读而真实 bundle 对应路径不存在，嵌套辅助的相对 vendor 导入成功；真实 run.sh/mock 检出 bundle/source 篡改并落盘，严格 turn.failed 仍失败。协调已核对报告与四文件差异范围。
 - ignored T09-M1-fix-report.md 保存细节；没有真实模型调用、旧结果重算或敏感配置落盘。T09 保持🟡，等待统一独审及最终新源全量验证；未把 mock/确定性测试当作新固定系列通过。
+
+### 2026-10-14 T05 M1 首轮有限覆盖反馈（待统一独审）
+
+- fresh 实现上下文新增技能内部只读 coverage.mjs 与 coverage reference，在模式判断和最终交付前接入。stdin 传入本轮已读允许源码和已核实 GP/VG/PA/LI 事实，不建 manifest、不运行目标脚本、不写目标；机械核对 conventions 验证入口到 VG、有限同类型递归聚合、根/子重复 PA 及已核实字段。源码风险/请求 LI 仅给 review 候选，仍须语义裁定，反馈未覆盖范围不能冒称完整。
+- 真实 f2 r2 首轮报告3个 VG 缺口、2个共享 PA 重复及已读源码风险/请求定位候选；对应二轮有限反馈归零。回归保留合法聚合、等价命令、低信息/普通导出、准确内容和合法 refresh；补 PA 后人读文档原字节保持，错 source 再检出。未知自定义合同仍 restricted，不迁移 apple-tools，不提前 M2。
+- 提交前协调发现初版测试直接依赖 ignored 诊断文件，已补为 tests/fixtures/bootstrap-coverage 跟踪最小片段：两轮各15个必要文件、42374字节，30/30与原始字节及SHA256一致；不含env文件/值、旧完整证据或外部可执行测试树，旧附件未改。测试每次核验夹具hash，在独立临时目标运行反馈并比较读取文件字节，CLI首轮exit1、二轮exit0。
+- 实现者实际当前 Node25.8.1 与 Node18.20.8 相关测试各27/27（新6项）；不含 .superpowers 的六文件外部副本默认 node --test 各6/6。SKILL50行、本地链接及软链扫描通过；协调 diff --check exit0。文件仅本技能三份、测试及三份夹具；详细报告 ignored T05-M1-fix-report.md。
+- T05 保持🟡待统一独立复验，尚无新真实模型系列。sources/facts 仍依赖模型提交完整已读证据，有限正则可能命中注释，其他语言/复杂聚合需人工核对；确定性反馈与现有 checker 不证明模型首轮必定完整或二轮必定 no-op。
