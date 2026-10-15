@@ -2,7 +2,7 @@
 
 Vic 的工程 Harness Codex 插件：建立项目事实合同，按需配置代理，检查合同与配置，并推荐工作流。
 
-**0.1.0 开发中，未发布。** 核心实现已完成，M1 最终发布验收仍待执行。
+**0.1.0 开发中，未发布。** 固定系列的规定技术门已有历史证据；已知语义与执行声明缺陷、用户人工体验验收仍未放行，见[第四系列正式记录](docs/harness/incidents/2026-10-15-m1-fourth-bootstrap.md)。
 
 | 技能 | 当前能力 |
 |---|---|
@@ -54,11 +54,13 @@ evals/run.sh --fixture f1 --skill vic-bootstrap --repeat 3 --layer 2 --model gpt
 
 fixture 支持 f1–f4 的唯一短名前缀；每次 repeat 使用干净基线并执行首轮、第二轮及完整树比较。默认 repeat=1、layer=2，timeout 单位为秒；L3 尚未实现。`--rtk` 仅在用户要求时添加 RTK 模型命令指导。原始事件、来源 hash、检查与断言、用量保存在 `evals/results/`，汇总写入 `evals/metrics.csv`；未知实际模型或用量如实留空/null。
 
-此为 source-path 显式读取技能的行为评测，与 marketplace 安装发现分别取证。最终 M1 同源 f1–f4 各三次系列、原生插件 loader 业务调用和用户亲自体验仍待验证，已有票级结果不代表发布通过。
+此为 source-path 显式读取技能的行为评测，与 marketplace 安装发现分别取证。同源 f1–f4 各三次固定系列的规定技术门已取得[历史证据](docs/harness/incidents/2026-10-15-m1-fourth-bootstrap.md)，不能抵销其中的语义与执行声明缺陷，也不能作为当前修订的行为回归。原生插件 loader 业务调用和用户人工体验验收仍未放行。
 
 ## 限制与可选插件
 
 非标准根合同入口或未知自定义 schema 没有无损迁移定义时，bootstrap 进入只读受限报告，保护原件；agents 仅将其作为带来源的线索。不能保证完整迁移所有自定义合同。已知行为限制见 [bootstrap incidents](docs/harness/incidents/2026-10-14-bootstrap.md) 和 [agents incidents](docs/harness/incidents/2026-10-14-agents.md)。
+
+bootstrap 显式调用期间按[独立语义审查协议](skills/vic-bootstrap/references/semantic-review.md)使用当前宿主已有能力：最多一个全新、只读职责 reviewer，先核对源码，再核对实际产物与完整最终声明，最多一次定向复核；不递归、不配置代理或执行业务。全新上下文、同一 reviewer 续传和原始执行事件分别确认；缺能力如实报告未执行/未完成，部分事件仅支持逐项有限核对。只读职责不是强制沙箱，作者转贴 JSON 不是原始事件。这一流程已接入，不表示真实模型行为修复已验证。
 
 本地 marketplace 已接线 [mattpocock/skills](https://github.com/mattpocock/skills)，固定 SHA `49dd158d1076134a641b33efb035946536778336`；可选安装：
 

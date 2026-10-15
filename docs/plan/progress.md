@@ -775,3 +775,10 @@ Node18.20.8: tests 29 / pass 29 / fail 0 / skipped 0
 
 - 首次独审双Node各18/18；第一次修复复审各实际11项通过，第二次入口复审各实际4项通过，均exit0。Node18名称过滤的跳过项不冒充已执行，不把限定独审写成最终全文件29/29。ignored依据位于 `.superpowers/sdd/2026-10-15-m1-structural-repair/` 的task-1实现/审查/两轮修复报告、原输出、快照和精确diff包，旧失败均保留。
 - 本包证明固定检查结果与有限执行边界，尚不证明模型会遵循或如实复述。F03/F04/不实声明仍是发布阻塞，第四系列旧分数不变；没有新模型系列、安装、apple-tools重跑、发布或M2/T10。主技能协议接入、整合验证及冻结来源上的新行为证据继续推进。
+
+### 2026-10-15 T05 方案 B：独立语义审查协议接入
+
+- 八文件接线完成：bootstrap 主 SKILL、artifacts/coverage/refresh-policy、唯一 semantic-review reference、获批的 vision/skills 非目标例外与 README。源码先行的 fresh reviewer、同上下文两个必要回合及最多一次复核分别核对源码、实际产物和完整最终回复草稿；原始事件能力独立发现，缺失或不完整的执行真实性不补成通过。只读职责不冒称强制沙箱，no-op 保持零写，旧错误转权限内 refresh，不改公开 schema/expected/entry_chain 含义，不新增日志或代理配置。
+- fresh 实现与 fresh 独审均完成；独审结论为“规格通过；质量可合入；必须修复项：无”。八文件集合 SHA256 `3353ad1f739c2d26d9a8812d4311e97128a2422aa0f53413af1c8d937b5c669e`，实际逐文件绑定一致。SKILL 56 行，44 个本地链接目标存在；唯一标题锚点实际存在，七个 tracked 文件的限定 `git diff --check` exit0，新增 reference 由全文和尾随空白扫描另核对。
+- 独审对真实加载先后、回调/dynamic import、普通符号与合法无 PA 封装、空集合遗漏、无 fresh/续传/原始事件、最终声明修订、no-op 旧错误与预算耗尽逐项静态走查；这是协议证据，不是模型行为结果。ignored 依据为本次实施账本的 `task-2-report.md`、`task-2-review-package.md`、`task-2-review.patch`、`task-2-review.md`。
+- 集成过程中 Node25 默认测试 exit0、92/92；Node18 默认发现误入 ignored 旧试用测试，exit1、1083 项中24失败，属于执行范围事故，不能当当前产品测试集合。已停止追加运行并保留原输出，单独归档事故和安全补验边界；不能声称旧快照未执行或没有间接副作用。三类行为发布阻塞、人工体验及 M1 放行仍未关闭，apple-tools 不另行重跑。

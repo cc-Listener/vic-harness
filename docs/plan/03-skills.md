@@ -21,6 +21,7 @@ Codex 启动时只读 name 和 description，所以 **description 决定能否�
 
 **步骤**（保留 v1 工作流，以下是 v2 的改动）：
 1. 盘点现有资产。按 `references/ownership.md` 识别外部文件和外部段落，标记为只读。
+   用户显式调用期间，按[独立审查协议](../../skills/vic-bootstrap/references/semantic-review.md)分别核验宿主的全新上下文、同一 reviewer 续传和原始执行事件能力；最多一个只读职责 reviewer。源码必要回合不继承作者历史/推理/分类/自评，先独立核对允许源码，再将既有文档作为待核线索。
 2. 把本次运行归类为 `bootstrap` / `refresh` / `no-op`（判定规则沿用 v1）。（v0.2 起）先用 `vic-check --drift --json` 的结果作为确定性触发证据，没有命中且合同完整时直接判为 no-op。
 3. 建立事实清单。每条关键事实都要有 `evidence` 和 `confidence`；（v0.2 起）补齐 `origin`、`status` 等全部来源字段。（v0.2 起）UA 图谱给出的事实标成 `origin: ua-graph`，回源码核实后才能升级为 `verified`。
 4. **验证 gate**：对 lint、typecheck、format-check 类命令实际运行，超时 120 秒，记录 `verified` 和 `exit_code`。测试命令默认不运行，只在用户要求时运行。**禁止运行** deploy、publish、release、数据库迁移以及任何会写外部系统的命令。
@@ -29,11 +30,13 @@ Codex 启动时只读 name 和 description，所以 **description 决定能否�
 7. 如果命中 app-deep 信号，按 `references/app-deep.md` 执行。
 8. （v0.2 起）追加一条 refresh-log。
 9. 运行 `vic-check --all`，有 error 就修到没有为止；修不了的写进 `uncertainty`，并在回复里说明。
+   将实际最终产物与完整最终回复草稿交同一 reviewer 执行第二必要回合，核对执行时序、封装用途和逐项执行声明；最多再做一次定向复核。审后实质改变文件、检查状态/范围或完成结论使对应旧判断失效；预算耗尽、超时、取消或未决时如实未完成，不换 reviewer 重置。准确 no-op 零写，真实旧错误转 refresh；原始事件仅部分可读则逐条核实，缺失部分保持未核实，不以作者转贴 JSON 替代。
 
 **输出**：被改动的文件；回复里给出 refresh 证据摘要（与 refresh-log 条目字段一致）。
 
 **禁止**：
 - 读写 `.codex/config.toml`、`.codex/agents/*`、`.codex/AGENTS.md`（这些归 vic-agents）
+- reviewer 递归派生、执行业务或修改文件/代理配置；只读职责不宣称强制沙箱，审查与修订绑定只留会话，不新增目标仓库 manifest/receipt/日志
 - 改写外部所有者的文件或段落
 - 把 `docs/agents/` 当成 legacy agent index 去纠偏
 - 没有证据就写组件合同或约定

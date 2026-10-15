@@ -35,7 +35,7 @@
 | `vic-router` | 工作流路由，告诉 agent 什么场景用哪个 skill | 新增 |
 
 **不负责（非目标）：**
-- 实际执行业务任务或启动子代理。`vic-agents` 只写配置，不执行
+- 实际执行业务任务。`vic-agents` 只写配置，不执行；唯一代理执行例外是用户显式调用 `vic-bootstrap` 期间，按其[审查协议](../../skills/vic-bootstrap/references/semantic-review.md)使用宿主已有能力启动最多一个全新、只读职责的独立 reviewer，两个必要回合加最多一次复核，不递归、不配置代理；缺能力如实报告未完成
 - 任务规划、spec/ticket 流程、issue tracker，这归 mattpocock/skills
 - 代码知识图谱，这归 Understand-Anything
 - 平行的代理配置层（`topology.yaml`、`roles/*.md`、`bridges/*.md`），这些在 v2 里不再生成
