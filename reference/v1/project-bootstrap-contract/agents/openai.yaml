@@ -1,4 +1,0 @@
-interface:
-  display_name: "项目初始化合同"
-  short_description: "初始化仓库地图与 agent 合同"
-  default_prompt: "使用 $project-bootstrap-contract 为仓库初始化或刷新 AGENTS.md 地图与项目上下文 contract；它可以独立运行。"

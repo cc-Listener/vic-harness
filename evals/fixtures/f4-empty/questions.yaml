@@ -1,7 +1,0 @@
-# L3 的题库，T04 不运行问答评分。
-- q: 目前唯一的程序入口在哪里？
-  must_contain: [main.py]
-- q: 能否确认静态检查命令？
-  must_contain: ['无法确认']
-- q: 未证实的检查或框架事实应放进哪个合同字段？
-  must_contain: [uncertainty]

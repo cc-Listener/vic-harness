@@ -1,4 +1,0 @@
-interface:
-  display_name: "多代理配置"
-  short_description: "评估项目委派收益，按当前官方模型与字段增量维护 Codex 代理配置"
-  default_prompt: "使用 $multi-agent-config 评估当前项目是否需要子代理，核对官方模型与配置字段，必要时增量更新 .codex/config.toml 和 .codex/agents/*.toml；存在项目合同时优先读取，无配置收益时保持零文件改动。"

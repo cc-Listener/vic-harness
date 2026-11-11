@@ -1,7 +1,0 @@
-# L3 的题库，T04 不运行问答评分。
-- q: 领域词汇应读取哪个文件？
-  must_contain: [GLOSSARY.md]
-- q: 需要人判断的编码约定应读取哪个文件？
-  must_contain: [CODING_STANDARDS.md]
-- q: 外部工作流文件位于哪里？
-  must_contain: [docs/agents/workflow.md]
