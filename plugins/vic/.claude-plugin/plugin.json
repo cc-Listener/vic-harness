@@ -1,0 +1,9 @@
+{
+  "name": "vic",
+  "version": "0.2.0",
+  "description": "Vic 的工程 harness 接线层：把 mattpocock/skills 的工作流与 Understand-Anything 的代码图谱接在一起，并定期升级与反思。",
+  "author": { "name": "Vic", "url": "https://github.com/cc-Listener" },
+  "repository": "https://github.com/cc-Listener/vic-harness",
+  "license": "MIT",
+  "dependencies": ["mattpocock-skills", "understand-anything"]
+}

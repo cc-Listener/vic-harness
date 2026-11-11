@@ -1,16 +1,31 @@
 # vic-harness · Agent 指南
 
-vic-harness v2：一个薄的胶水层，把 [mattpocock/skills](https://github.com/mattpocock/skills)（工作流）和 [Understand-Anything](https://github.com/Egonex-AI/Understand-Anything)（代码事实与知识图谱）组合成 Vic 的工程 harness。这一层只负责接线和确定性闸门，不重新实现这两个插件已有的能力。
+这个仓库是 vic-harness 的 marketplace 和 vic 插件源码。用户文档见 [README.md](README.md)。
 
-当前阶段：**从零重新规划。** v1 已整体删除，保留在本地 tag `v1-archive`，只作历史参考，不迁移代码。
+## 读取顺序
 
-## 已定方向（2026-11-11）
+1. [GLOSSARY.md](GLOSSARY.md)：术语（上游、锁定版本、接线、指针、图谱、升级、反思）
+2. [docs/adr/](docs/adr/)：已定决策，修改前先读
+3. 按任务读对应文件：
+   - 分发与版本 → `.claude-plugin/marketplace.json`、`scripts/vic.mjs`
+   - 接线规则 → `plugins/vic/skills/vic/SKILL.md`
+   - 升级与反思流程 → `plugins/vic/skills/vic-sync/SKILL.md`、`.github/workflows/upstream.yml`
 
-- runtime：Claude Code 和 Codex，用同一份 skill 源码适配两种格式
-- 事实层：精简的合同，从 UA 图谱确定性地生成；只人工维护图谱给不出的事实（禁区、验证闸门）
-- 集成方式：组合，不吞并；不 fork、不复制 Matt 或 UA 的代码和 skill 文本
-- Multica 负责任务派发和 Squad 编排，和 harness 互不冲突；harness 只管每个 agent 进入仓库时的环境
+## 规则
 
-## 工作方式
+- 不复制上游的代码或 skill 文本，只按 SHA 引用（ADR 0001）。
+- 版本只写在 `.claude-plugin/marketplace.json` 一处（ADR 0002）。
+- 修改 `plugins/vic/` 下的内容后，把 `plugins/vic/.claude-plugin/plugin.json` 的 `version` 加一，否则成员机器不会更新。
+- 接线表里引用上游 skill 时，一律写完整的 `/插件:skill`；`scripts/vic.mjs check` 会在锁定版本上逐一校验这些引用。
+- 零 npm 依赖，Node >= 18。
 
-按 Matt 的主流程推进：`/grill-with-docs` → `/to-spec` → `/to-tickets` → `/implement`。决策写在 `docs/adr/`，术语写在 `GLOSSARY.md`。
+## 验证
+
+提交前运行：
+
+```bash
+node --test
+node scripts/vic.mjs check
+```
+
+v1 已废弃，只保留在本地 tag `v1-archive`，不要从中迁移代码。

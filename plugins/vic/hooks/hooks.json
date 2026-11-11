@@ -1,0 +1,15 @@
+{
+  "description": "会话开始时提示 agent 读取 vic 接线规则",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}
