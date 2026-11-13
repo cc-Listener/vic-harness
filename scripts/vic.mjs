@@ -5,7 +5,7 @@
 //   node scripts/vic.mjs check                 校验 marketplace 与接线引用
 //   node scripts/vic.mjs codex-install [--dry-run] [--local]   按锁定版本把上游和 vic 装进 Codex
 //   node scripts/vic.mjs upstream [--write]    查询上游最新版本；--write 时写回锁定版本
-import { readFile, writeFile, readdir, mkdtemp, rm } from 'node:fs/promises';
+import { readFile, writeFile, readdir, mkdtemp, rm, realpath } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { join, dirname } from 'node:path';
@@ -232,6 +232,8 @@ async function main(argv) {
   return 2;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// 比较真实路径：/tmp → /private/tmp 这类系统别名会让字面比较失败。
+const entry = process.argv[1] && await realpath(process.argv[1]).catch(() => null);
+if (entry && entry === await realpath(fileURLToPath(import.meta.url))) {
   process.exitCode = await main(process.argv.slice(2)).catch(error => { console.error(error.message); return 2; });
 }

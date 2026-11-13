@@ -82,3 +82,16 @@ test('Codex AGENTS.md 指针段：追加、幂等、保留其他内容', () => {
   assert.equal(upsertPointer(edited), once);
   assert.ok(upsertPointer('').startsWith('<!-- vic-harness:begin -->'));
 });
+
+test('通过别名路径（如 /tmp 软链）调用脚本时仍会执行 main', async () => {
+  const { execFile } = await import('node:child_process');
+  const { mkdtemp, symlink, rm } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const dir = await mkdtemp(join(tmpdir(), 'vic-alias-'));
+  try {
+    await symlink(ROOT, join(dir, 'repo'));
+    const out = await new Promise((resolve, reject) => execFile(process.execPath,
+      [join(dir, 'repo/scripts/vic.mjs'), 'check', '--offline'], (e, stdout) => e ? reject(e) : resolve(stdout)));
+    assert.match(out, /vic check：通过/);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
