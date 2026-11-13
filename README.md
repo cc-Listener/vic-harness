@@ -28,7 +28,7 @@ claude plugin install vic@vic-harness
 ```json
 {
   "extraKnownMarketplaces": {
-    "vic-harness": { "source": { "source": "github", "repo": "cc-Listener/vic-harness" }, "autoUpdate": true }
+    "vic-harness": { "source": { "source": "url", "url": "https://github.com/cc-Listener/vic-harness.git" }, "autoUpdate": true }
   }
 }
 ```

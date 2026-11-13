@@ -95,3 +95,12 @@ test('通过别名路径（如 /tmp 软链）调用脚本时仍会执行 main', 
     assert.match(out, /vic check：通过/);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+test('上游条目统一用 HTTPS 克隆，不依赖 SSH（22 端口常被封）', async () => {
+  const market = await loadMarketplace();
+  for (const name of ['mattpocock-skills', 'understand-anything']) {
+    const src = market.plugins.find(p => p.name === name).source;
+    assert.notEqual(src.source, 'github', `${name} 不应使用 github 源（会走 SSH）`);
+    assert.match(src.url, /^https:\/\//);
+  }
+});

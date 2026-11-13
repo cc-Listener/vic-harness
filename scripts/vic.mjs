@@ -27,7 +27,7 @@ export async function loadMarketplace(path = MARKETPLACE) {
 }
 
 export function repoUrl(source) {
-  if (source.source === 'github') return `https://github.com/${source.repo}.git`;
+  if (source.source === 'github') return `https://github.com/${source.repo}.git`; // url / git-subdir 直接用 url
   return source.url;
 }
 
@@ -42,7 +42,7 @@ export function validateMarketplace(market) {
     if (!src || typeof src !== 'object') { errors.push(`${name}：source 必须是对象`); continue; }
     if (!/^[0-9a-f]{40}$/.test(src.sha || '')) errors.push(`${name}：source.sha 必须是 40 位小写 commit SHA`);
     if (!/^\d+\.\d+\.\d+/.test(entry.version || '')) errors.push(`${name}：缺少锁定的 version`);
-    if (!['github', 'git-subdir'].includes(src.source)) errors.push(`${name}：不支持的 source 类型 ${src.source}`);
+    if (!['github', 'url', 'git-subdir'].includes(src.source)) errors.push(`${name}：不支持的 source 类型 ${src.source}`);
   }
   const vic = byName.get('vic');
   if (!vic) errors.push('marketplace 缺少 vic 条目');
