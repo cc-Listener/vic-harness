@@ -23,15 +23,17 @@ claude plugin install vic@vic-harness
 
 如果之前从别的来源装过 Matt 或 UA，比如官方目录的 `mattpocock-skills@claude-plugins-official`，先卸掉它，否则同一批 skill 会出现两份。
 
-开启自动更新：在 `/plugin` → Marketplaces 里打开 vic-harness 的自动更新（第三方 marketplace 默认关闭）。团队也可以在 `~/.claude/settings.json` 里统一配置：
+开启自动更新：第三方 marketplace 默认关闭。在 `~/.claude/settings.json` 里给 vic-harness 加上 `autoUpdate`：
 
 ```json
 {
   "extraKnownMarketplaces": {
-    "vic-harness": { "source": { "source": "url", "url": "https://github.com/cc-Listener/vic-harness.git" }, "autoUpdate": true }
+    "vic-harness": { "source": { "source": "github", "repo": "cc-Listener/vic-harness" }, "autoUpdate": true }
   }
 }
 ```
+
+这里的 `source` 必须和添加 marketplace 时用的来源一致（上面的 `marketplace add cc-Listener/vic-harness` 对应 `github` 类型）。不一致时 Claude Code 会忽略这个 marketplace，三个插件全部加载失败。
 
 ### Codex
 
