@@ -63,15 +63,37 @@ test('写回升级不改动其他条目，也不修改原对象', () => {
   assert.deepEqual(next.plugins[0], market.plugins[0]);
 });
 
-test('Codex 安装命令使用 marketplace 里锁定的 SHA', async () => {
+test('Codex 只从 vic-harness 一个 marketplace 安装全部插件', async () => {
   const market = await loadMarketplace();
-  const cmds = codexCommands(market);
-  for (const name of ['mattpocock-skills', 'understand-anything']) {
-    const pinned = market.plugins.find(p => p.name === name).source.sha;
-    const add = cmds.find(c => c.name === name).steps[1];
-    assert.deepEqual(add.slice(-2), ['--ref', pinned]);
+  const lines = codexCommands(market).map(c => c.cmd.join(' '));
+  for (const name of ['vic', 'mattpocock-skills', 'understand-anything']) {
+    assert.ok(lines.includes(`codex plugin add ${name}@vic-harness`), `缺少 ${name}@vic-harness`);
   }
-  assert.ok(cmds.at(-1).steps.some(s => s.join(' ') === 'codex plugin add vic@vic-harness'));
+  assert.ok(lines.includes('codex plugin marketplace add cc-Listener/vic-harness'));
+  // 不再单独添加上游 marketplace，也不在命令行里写 SHA：版本只来自 marketplace.json。
+  assert.ok(!lines.some(l => / marketplace add (mattpocock|Egonex-AI)\//.test(l)));
+  assert.ok(!lines.some(l => l.includes('--ref')));
+});
+
+test('Codex 安装会清理旧版单独添加的上游 marketplace，且清理失败不阻断安装', async () => {
+  const cmds = codexCommands(await loadMarketplace());
+  for (const mk of ['mattpocock', 'understand-anything']) {
+    const step = cmds.find(c => c.cmd.join(' ') === `codex plugin marketplace remove ${mk}`);
+    assert.ok(step?.optional, `应可选地移除 ${mk}`);
+  }
+  const firstAdd = cmds.findIndex(c => c.cmd.includes('add') && !c.optional);
+  assert.ok(cmds.slice(0, firstAdd).every(c => c.optional), '清理步骤应在安装之前');
+});
+
+test('上游 source 只允许 Claude Code 与 Codex 都支持的 url / git-subdir', () => {
+  const market = { plugins: [
+    { name: 'vic', source: './plugins/vic' },
+    { name: 'mattpocock-skills', version: '1.0.0', source: { source: 'github', repo: 'a/b', sha: sha('a') } },
+    { name: 'understand-anything', version: '1.0.0', source: { source: 'git-subdir', url: 'https://x', path: 'p', sha: sha('b') } },
+  ] };
+  const errors = validateMarketplace(market);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /mattpocock-skills.*url 或 git-subdir/);
 });
 
 test('Codex AGENTS.md 指针段：追加、幂等、保留其他内容', () => {

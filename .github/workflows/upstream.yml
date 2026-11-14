@@ -46,4 +46,4 @@ jobs:
           body: |
             ${{ steps.upstream.outputs.summary }}
 
-            合并后成员机器的处理：Claude Code 在开启 vic-harness marketplace 自动更新时自动拉取；Codex 重新运行 `node scripts/vic.mjs codex-install`。
+            合并后成员机器的处理：Claude Code 在开启 vic-harness marketplace 自动更新时自动拉取；Codex 运行 `codex plugin marketplace upgrade vic-harness`。

@@ -46,7 +46,7 @@ vic-harness 解决这三件事：
 
 - 上游按 commit SHA 锁定，版本只写在 [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) 一处。
 - 接线表里引用的每个上游 skill，都会在锁定版本上自动校验是否存在。
-- Claude Code 通过插件依赖一次安装；Codex 通过脚本按同一组 SHA 安装。
+- Claude Code 与 Codex 都从同一个 marketplace 以插件形式安装；Claude Code 通过插件依赖一条命令装全。
 - 零 npm 依赖，只需要 Node >= 18。
 
 ## 工作原理
@@ -59,8 +59,8 @@ flowchart LR
   end
   M -->|按 SHA 引用| Matt[mattpocock/skills]
   M -->|按 SHA 引用| UA[Understand-Anything]
-  M --> CC[Claude Code<br/>一条 install]
-  M --> CX[Codex<br/>codex-install 脚本]
+  M --> CC[Claude Code<br/>plugin install]
+  M --> CX[Codex<br/>plugin add]
   GA[GitHub Action 每周] -->|上游新版本| PR[升级 PR]
   PR -->|维护者合并| M
 ```
@@ -71,7 +71,7 @@ flowchart LR
 
 - Claude Code 或 Codex CLI（Codex 已在 0.166.0 上验证）
 - Git
-- Node.js >= 18（仅 Codex 安装脚本和开发时需要）
+- Node.js >= 18（Codex 写入接线指针，以及开发时需要）
 
 ## 快速开始
 
@@ -121,7 +121,25 @@ claude plugin uninstall mattpocock-skills@claude-plugins-official
 
 ### Codex
 
-Codex 插件不支持依赖声明，所以由脚本按同一组锁定版本安装：
+Codex 也从同一个 marketplace 以插件形式安装。Codex 插件没有依赖机制，三个插件要分别添加：
+
+```bash
+codex plugin marketplace add cc-Listener/vic-harness
+```
+
+```bash
+codex plugin add vic@vic-harness
+```
+
+```bash
+codex plugin add mattpocock-skills@vic-harness
+```
+
+```bash
+codex plugin add understand-anything@vic-harness
+```
+
+Codex 目前不加载插件自带的 hook，所以还需要在 `~/.codex/AGENTS.md` 里写一行指针，让 agent 知道先读接线规则。用安装脚本可以一次做完上面四步再加上这一步：
 
 ```bash
 git clone https://github.com/cc-Listener/vic-harness.git
@@ -131,9 +149,13 @@ git clone https://github.com/cc-Listener/vic-harness.git
 node vic-harness/scripts/vic.mjs codex-install
 ```
 
-脚本会按锁定的 SHA 添加两个上游 marketplace 并安装对应插件，然后安装 `vic`，最后在 `~/.codex/AGENTS.md` 里维护一个带标记的指针段，标记外的内容不动。
+脚本还会清理旧版单独添加的 `mattpocock`、`understand-anything` marketplace，避免同一批 skill 出现两份。指针段带标记，标记外的内容不动。重复运行是安全的，加 `--dry-run` 只打印命令、不执行。
 
-重复运行是安全的。加 `--dry-run` 只打印命令、不执行。升级时先 `git pull`，再运行一次。
+**升级：**
+
+```bash
+codex plugin marketplace upgrade vic-harness
+```
 
 ## 使用
 
@@ -159,7 +181,7 @@ node vic-harness/scripts/vic.mjs codex-install
 - **自动**：[`.github/workflows/upstream.yml`](.github/workflows/upstream.yml) 每周一查询上游。只要上游发布了新版本（`plugin.json` 的 `version` 变化），就开一个 PR，附上版本变化和接线检查结果，由维护者审阅后合并。只有新 commit、没有新版本时不开 PR。
 - **手动**：在本仓库运行 `/vic:vic-sync`。它会升级上游、修复失效的接线，并把本周期的 retro 结论分类落地：改接线表、加检查、整理给上游的 issue 草稿，或者归为个人偏好。
 
-合并后，Claude Code 在开启自动更新时会自动拉取新版本；Codex 重新运行 `codex-install`。
+合并后，Claude Code 在开启自动更新时会自动拉取新版本；Codex 运行 `codex plugin marketplace upgrade vic-harness`。
 
 ## 常见问题
 

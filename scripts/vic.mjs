@@ -3,7 +3,7 @@
 // 唯一的版本来源是 .claude-plugin/marketplace.json（ADR 0002）。
 //
 //   node scripts/vic.mjs check                 校验 marketplace 与接线引用
-//   node scripts/vic.mjs codex-install [--dry-run] [--local]   按锁定版本把上游和 vic 装进 Codex
+//   node scripts/vic.mjs codex-install [--dry-run] [--local]   从 vic-harness marketplace 安装或升级三个插件，并写入 AGENTS.md 指针
 //   node scripts/vic.mjs upstream [--write]    查询上游最新版本；--write 时写回锁定版本
 import { readFile, writeFile, readdir, mkdtemp, rm, realpath } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
@@ -16,10 +16,10 @@ const run = promisify(execFile);
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const MARKETPLACE = join(ROOT, '.claude-plugin/marketplace.json');
 
-// 每个上游：在 marketplace 里的条目名、Codex 要添加的 marketplace 源、上游自己的 marketplace 名。
+// 每个上游：plugin.json 位置，以及 skill 列表从哪里读。
 export const UPSTREAMS = {
-  'mattpocock-skills': { codexSource: 'mattpocock/skills', codexMarketplace: 'mattpocock', manifest: '.claude-plugin/plugin.json', skillsFrom: 'manifest' },
-  'understand-anything': { codexSource: 'Egonex-AI/Understand-Anything', codexMarketplace: 'understand-anything', manifest: 'understand-anything-plugin/.claude-plugin/plugin.json', skillsFrom: 'understand-anything-plugin/skills' },
+  'mattpocock-skills': { manifest: '.claude-plugin/plugin.json', skillsFrom: 'manifest' },
+  'understand-anything': { manifest: 'understand-anything-plugin/.claude-plugin/plugin.json', skillsFrom: 'understand-anything-plugin/skills' },
 };
 
 export async function loadMarketplace(path = MARKETPLACE) {
@@ -27,7 +27,6 @@ export async function loadMarketplace(path = MARKETPLACE) {
 }
 
 export function repoUrl(source) {
-  if (source.source === 'github') return `https://github.com/${source.repo}.git`; // url / git-subdir 直接用 url
   return source.url;
 }
 
@@ -42,7 +41,7 @@ export function validateMarketplace(market) {
     if (!src || typeof src !== 'object') { errors.push(`${name}：source 必须是对象`); continue; }
     if (!/^[0-9a-f]{40}$/.test(src.sha || '')) errors.push(`${name}：source.sha 必须是 40 位小写 commit SHA`);
     if (!/^\d+\.\d+\.\d+/.test(entry.version || '')) errors.push(`${name}：缺少锁定的 version`);
-    if (!['github', 'url', 'git-subdir'].includes(src.source)) errors.push(`${name}：不支持的 source 类型 ${src.source}`);
+    if (!['url', 'git-subdir'].includes(src.source)) errors.push(`${name}：source 类型必须是 url 或 git-subdir（Claude Code 与 Codex 都支持，且走 HTTPS），实际是 ${src.source}`);
   }
   const vic = byName.get('vic');
   if (!vic) errors.push('marketplace 缺少 vic 条目');
@@ -150,25 +149,26 @@ export function applyUpgrade(market, plan) {
   return next;
 }
 
-export function codexCommands(market, { local = false } = {}) {
-  const cmds = [];
-  for (const [name, up] of Object.entries(UPSTREAMS)) {
-    const entry = market.plugins.find(p => p.name === name);
-    cmds.push({ name, ref: entry.source.sha, steps: [
-      ['codex', 'plugin', 'marketplace', 'remove', up.codexMarketplace],
-      ['codex', 'plugin', 'marketplace', 'add', up.codexSource, '--ref', entry.source.sha],
-      ['codex', 'plugin', 'add', `${name}@${up.codexMarketplace}`],
-    ] });
-  }
-  cmds.push({ name: 'vic', ref: null, steps: [
-    ['codex', 'plugin', 'marketplace', 'remove', 'vic-harness'],
-    ['codex', 'plugin', 'marketplace', 'add', local ? ROOT : VIC_REPO],
-    ['codex', 'plugin', 'add', 'vic@vic-harness'],
-  ] });
-  return cmds;
-}
+export const VIC_REPO = 'cc-Listener/vic-harness';
+export const VIC_MARKETPLACE = 'vic-harness';
+// 旧版 codex-install 单独添加过的上游 marketplace，迁移时移除，避免 skill 出现两份。
+const LEGACY_CODEX_MARKETPLACES = { 'mattpocock-skills': 'mattpocock', 'understand-anything': 'understand-anything' };
 
-const VIC_REPO = 'cc-Listener/vic-harness';
+// Codex 与 Claude Code 共用同一个 marketplace（ADR 0006）：三个插件都从 vic-harness 安装。
+// Codex 没有插件依赖，所以逐个 add；marketplace 已存在时 upgrade 会刷新锁定版本。
+export function codexCommands(market, { local = false } = {}) {
+  const legacy = Object.entries(LEGACY_CODEX_MARKETPLACES).flatMap(([plugin, mk]) => [
+    { cmd: ['codex', 'plugin', 'remove', `${plugin}@${mk}`], optional: true },
+    { cmd: ['codex', 'plugin', 'marketplace', 'remove', mk], optional: true },
+  ]);
+  const plugins = market.plugins.map(p => p.name);
+  return [
+    ...legacy,
+    { cmd: ['codex', 'plugin', 'marketplace', 'add', local ? ROOT : VIC_REPO], optional: false },
+    { cmd: ['codex', 'plugin', 'marketplace', 'upgrade', VIC_MARKETPLACE], optional: true },
+    ...plugins.map(name => ({ cmd: ['codex', 'plugin', 'add', `${name}@${VIC_MARKETPLACE}`], optional: false })),
+  ];
+}
 const BEGIN = '<!-- vic-harness:begin -->';
 const END = '<!-- vic-harness:end -->';
 const POINTER = `${BEGIN}
@@ -195,16 +195,14 @@ async function main(argv) {
   }
   if (command === 'codex-install') {
     const dry = flags.includes('--dry-run');
-    for (const { name, steps } of codexCommands(market, { local: flags.includes('--local') })) {
-      for (const [i, step] of steps.entries()) {
-        console.log(`$ ${step.join(' ')}`);
-        if (dry) continue;
-        try { await run(step[0], step.slice(1)); }
-        catch (error) {
-          if (i === 0) continue; // remove 在首次安装时会失败，可以忽略
-          console.error(`安装 ${name} 失败：${(error.stderr || error.message).trim()}`);
-          return 1;
-        }
+    for (const { cmd, optional } of codexCommands(market, { local: flags.includes('--local') })) {
+      console.log(`$ ${cmd.join(' ')}`);
+      if (dry) continue;
+      try { await run(cmd[0], cmd.slice(1)); }
+      catch (error) {
+        if (optional) continue; // 迁移清理、已存在时的刷新：失败可以忽略
+        console.error(`失败：${(error.stderr || error.message).trim()}`);
+        return 1;
       }
     }
     const agentsFile = join(process.env.CODEX_HOME || join(homedir(), '.codex'), 'AGENTS.md');
